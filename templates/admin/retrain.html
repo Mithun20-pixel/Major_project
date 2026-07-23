@@ -1,0 +1,36 @@
+{% extends "base.html" %}{% block title %}Retrain Models{% endblock %}
+{% block content %}
+<div class="container-xl py-5">
+  <h1 class="section-title mb-4">🤖 Model Training Logs</h1>
+  {% if model_logs %}
+  <div class="glass-card p-3">
+    <div class="table-responsive">
+      <table class="table table-borderless align-middle small" style="color:var(--text-primary);">
+        <thead><tr style="color:var(--text-muted);text-transform:uppercase;font-size:0.72rem;">
+          <th>Disease</th><th>Algorithm</th><th>Version</th><th>Accuracy</th><th>F1</th><th>ROC-AUC</th><th>Active</th><th>Date</th>
+        </tr></thead>
+        <tbody>
+          {% for log in model_logs %}
+          <tr>
+            <td class="fw-600">{{ log.disease }}</td>
+            <td>{{ log.algorithm }}</td>
+            <td class="text-muted">{{ log.version }}</td>
+            <td>{{ '%.2f'|format(log.accuracy) if log.accuracy else '—' }}</td>
+            <td>{{ '%.2f'|format(log.f1_score) if log.f1_score else '—' }}</td>
+            <td>{{ '%.2f'|format(log.roc_auc) if log.roc_auc else '—' }}</td>
+            <td>{% if log.is_active %}<span class="badge bg-success">✓</span>{% else %}<span class="badge bg-secondary">—</span>{% endif %}</td>
+            <td class="text-muted">{{ log.created_at.strftime('%d %b %Y') }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="glass-card p-5 text-center">
+    <div style="font-size:3rem;">🤖</div>
+    <h4 class="fw-700 mt-3 mb-2">No Models Trained Yet</h4>
+    <p class="text-muted">Model training will be available in Phase 3.</p>
+  </div>
+  {% endif %}
+</div>{% endblock %}

@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Prediction History{% endblock %}
+{% block content %}
+<div class="container-xl py-5">
+  <h1 class="section-title mb-1">Prediction History</h1>
+  <p class="text-muted mb-5">All your past health analyses</p>
+
+  {% if predictions.items %}
+  <div class="glass-card p-3">
+    <div class="table-responsive">
+      <table class="table table-borderless align-middle" style="color:var(--text-primary);">
+        <thead>
+          <tr style="color:var(--text-muted);font-size:0.78rem;text-transform:uppercase;letter-spacing:.05em;">
+            <th>#</th><th>Date</th><th>Overall Score</th><th>High Risk Diseases</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in predictions.items %}
+          <tr>
+            <td class="text-muted small">{{ p.id }}</td>
+            <td class="small">{{ p.created_at.strftime('%d %b %Y, %H:%M') }}</td>
+            <td>
+              <span class="fw-700 gradient-text fs-5">
+                {{ p.overall_health_score|round|int if p.overall_health_score else '—' }}
+              </span>
+              <span class="text-muted small">/100</span>
+            </td>
+            <td>
+              {% set high = p.disease_risks.values()|selectattr('risk_level','equalto','High')|list|length %}
+              {% if high > 0 %}
+                <span class="risk-badge risk-high">{{ high }} High Risk</span>
+              {% else %}
+                <span class="risk-badge risk-low">All Low/Medium</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{{ url_for('predict.results', prediction_id=p.id) }}"
+                 class="btn btn-sm btn-outline-success rounded-pill px-3">
+                <i class="bi bi-eye me-1"></i>View
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if predictions.pages > 1 %}
+    <nav class="mt-3" aria-label="Page navigation">
+      <ul class="pagination justify-content-center pagination-sm">
+        {% if predictions.has_prev %}
+        <li class="page-item">
+          <a class="page-link" href="{{ url_for('main.history', page=predictions.prev_num) }}">←</a>
+        </li>
+        {% endif %}
+        {% for page_num in predictions.iter_pages(left_edge=2, right_edge=2, left_current=2, right_current=2) %}
+          {% if page_num %}
+          <li class="page-item {{ 'active' if page_num == predictions.page else '' }}">
+            <a class="page-link" href="{{ url_for('main.history', page=page_num) }}">{{ page_num }}</a>
+          </li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+        {% endfor %}
+        {% if predictions.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="{{ url_for('main.history', page=predictions.next_num) }}">→</a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+    {% endif %}
+  </div>
+
+  {% else %}
+  <div class="glass-card p-5 text-center">
+    <div style="font-size:3rem;" class="mb-3">📋</div>
+    <h4 class="fw-700 mb-2">No Analyses Yet</h4>
+    <p class="text-muted mb-4">Start your first health risk analysis to see results here.</p>
+    <a href="{{ url_for('predict.step1') }}" class="btn btn-gradient rounded-pill px-4 py-2" id="historyStartBtn">
+      Start Analysis
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

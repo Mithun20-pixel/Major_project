@@ -1,0 +1,378 @@
+{% extends "base.html" %}
+{% block title %}Health Progress{% endblock %}
+
+{% block extra_css %}
+<style>
+.progress-stat-card {
+  background: var(--glass-bg, rgba(255,255,255,.04));
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 18px;
+  padding: 1.5rem;
+  transition: transform .3s, border-color .3s;
+  position: relative;
+  overflow: hidden;
+}
+.progress-stat-card::before {
+  content:'';
+  position:absolute; top:-30px; right:-30px;
+  width:100px; height:100px;
+  border-radius:50%;
+  opacity:.06;
+}
+.progress-stat-card.purple::before { background: #6C63FF; }
+.progress-stat-card.teal::before   { background: #4ecdc4; }
+.progress-stat-card.green::before  { background: #10b981; }
+.progress-stat-card.orange::before { background: #f97316; }
+.progress-stat-card:hover { transform: translateY(-4px); border-color: rgba(108,99,255,.3); }
+
+.stat-big-num { font-size: 2.4rem; font-weight: 800; line-height: 1; }
+.stat-change-badge {
+  display: inline-flex; align-items: center; gap: .25rem;
+  font-size: .75rem; font-weight: 600;
+  padding: .25rem .65rem; border-radius: 99px;
+}
+.stat-change-badge.up   { background: rgba(16,185,129,.15); color: #10b981; }
+.stat-change-badge.down { background: rgba(239,68,68,.12);  color: #ef4444; }
+.stat-change-badge.flat { background: rgba(148,163,184,.1); color: #94a3b8; }
+
+.streak-badge {
+  background: linear-gradient(135deg, #f97316, #fbbf24);
+  color: #fff; font-weight: 700;
+  border-radius: 14px; padding: .6rem 1.4rem;
+  font-size: 1rem;
+  display: inline-flex; align-items: center; gap: .5rem;
+}
+
+.tip-card {
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+  border: 1px solid transparent;
+  margin-bottom: .75rem;
+  display: flex; align-items: flex-start; gap: .75rem;
+}
+.tip-card.success { background: rgba(16,185,129,.08); border-color: rgba(16,185,129,.2); }
+.tip-card.warning { background: rgba(251,191,36,.07); border-color: rgba(251,191,36,.2); }
+.tip-card.danger  { background: rgba(239,68,68,.07);  border-color: rgba(239,68,68,.2);  }
+.tip-card.info    { background: rgba(59,130,246,.07); border-color: rgba(59,130,246,.2); }
+.tip-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: .1rem; }
+
+.chart-card {
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 16px;
+  padding: 1.5rem;
+}
+
+.log-pill {
+  display: inline-flex; align-items: center; gap: .4rem;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 99px; padding: .3rem .9rem;
+  font-size: .78rem; color: var(--text-muted);
+}
+.no-data-state { text-align:center; padding: 4rem 2rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-xl py-5">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-5 flex-wrap gap-3">
+    <div>
+      <h1 class="section-title mb-1">📊 Health Progress</h1>
+      <p class="text-muted mb-0">Your lifestyle trends and disease risk evolution</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      {% if streak > 0 %}
+      <div class="streak-badge"><i class="bi bi-fire"></i> {{ streak }}-Day Streak!</div>
+      {% endif %}
+      {% if not today_log %}
+      <a href="{{ url_for('tracker.log_form') }}" class="btn btn-gradient rounded-pill px-4 py-2">
+        <i class="bi bi-plus-circle me-2"></i>Log Today
+      </a>
+      {% else %}
+      <span class="btn btn-outline-success rounded-pill px-4 py-2 pe-none">
+        <i class="bi bi-check-circle-fill me-2"></i>Logged Today ✓
+      </span>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if log_count == 0 %}
+  <!-- No data state -->
+  <div class="glass-card no-data-state">
+    <div style="font-size:4rem;" class="mb-3">📋</div>
+    <h3 class="fw-700 mb-2">No Logs Yet</h3>
+    <p class="text-muted mb-4">Start logging your daily health data to see your progress charts and AI-powered insights here.</p>
+    <a href="{{ url_for('tracker.log_form') }}" class="btn btn-gradient rounded-pill px-5 py-2">
+      <i class="bi bi-plus-circle me-2"></i>Log My First Day
+    </a>
+  </div>
+
+  {% else %}
+
+  <!-- ── Top Stat Cards ───────────────────────────────────────── -->
+  <div class="row g-4 mb-5">
+    {% set w = weekly_stats %}
+    {% set wt = w.this_week %}
+    {% set wc = w.changes %}
+
+    {% set cards = [
+      ('purple', '⚡', 'Health Score', wt.health_score if wt else '—', wc.health_score if wc else 0, '/100'),
+      ('teal',   '😴', 'Avg Sleep',   (wt.sleep_hours ~ ' hrs') if wt else '—', wc.sleep_hours if wc else 0, ''),
+      ('green',  '💧', 'Avg Water',   (wt.water_intake ~ ' L') if wt else '—', wc.water_intake if wc else 0, ''),
+      ('orange', '🏃', 'Avg Exercise',(wt.exercise_minutes|int ~ ' min') if wt else '—', wc.exercise_minutes if wc else 0, ''),
+    ] %}
+
+    {% for color, emoji, label, val, change, suffix in cards %}
+    <div class="col-6 col-lg-3">
+      <div class="progress-stat-card {{ color }} animate-fade-up">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <span style="font-size:1.6rem;">{{ emoji }}</span>
+          {% if change and change != 0 %}
+          <span class="stat-change-badge {% if change > 0 %}up{% elif change < 0 %}down{% else %}flat{% endif %}">
+            <i class="bi bi-arrow-{% if change > 0 %}up{% elif change < 0 %}down{% else %}right{% endif %}"></i>
+            {{ change|abs }}%
+          </span>
+          {% endif %}
+        </div>
+        <div class="stat-big-num gradient-text">{{ val }}{{ suffix }}</div>
+        <div class="text-muted small mt-1">{{ label }} (7-day avg)</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- ── Charts Row ─────────────────────────────────────────── -->
+  <div class="row g-4 mb-5">
+    <div class="col-lg-8">
+      <div class="chart-card h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <h5 class="fw-700 mb-0"><i class="bi bi-graph-up me-2 text-success"></i>Daily Health Score Trend</h5>
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="loadChart(7)" id="btn7">7 days</button>
+            <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 active" onclick="loadChart(30)" id="btn30">30 days</button>
+          </div>
+        </div>
+        <canvas id="healthScoreChart" height="200" aria-label="Health score trend chart"></canvas>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="chart-card h-100">
+        <h5 class="fw-700 mb-3"><i class="bi bi-heart-pulse me-2 text-danger"></i>Updated Risk</h5>
+        {% if updated_risk %}
+          {% set top5 = updated_risk.disease_risks.items()|list|sort(attribute='1', reverse=True)|list %}
+          {% for disease, prob in top5[:5] %}
+          <div class="mb-2">
+            <div class="d-flex justify-content-between small mb-1">
+              <span class="text-muted">{{ disease.replace('_',' ')|title }}</span>
+              <span class="fw-600">{{ prob }}%</span>
+            </div>
+            <div class="progress" style="height:5px;border-radius:99px;background:rgba(255,255,255,.06);">
+              <div class="progress-bar"
+                   style="width:{{ prob }}%;border-radius:99px;background:{% if prob > 66 %}#ef4444{% elif prob > 33 %}#f97316{% else %}#10b981{% endif %};">
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+          <div class="mt-3 text-center">
+            <a href="{{ url_for('tracker.comparison') }}" class="btn btn-sm btn-outline-success rounded-pill px-3">
+              Compare with Baseline →
+            </a>
+          </div>
+        {% else %}
+          <p class="text-muted small">Complete your initial questionnaire to see updated risk.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Trend Charts Grid ──────────────────────────────────── -->
+  <div class="row g-4 mb-5">
+    <div class="col-md-6 col-lg-4">
+      <div class="chart-card"><h6 class="fw-700 mb-3">😴 Sleep Trend</h6>
+        <canvas id="sleepChart" height="160"></canvas></div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+      <div class="chart-card"><h6 class="fw-700 mb-3">💧 Water Intake</h6>
+        <canvas id="waterChart" height="160"></canvas></div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+      <div class="chart-card"><h6 class="fw-700 mb-3">🏃 Exercise (min)</h6>
+        <canvas id="exerciseChart" height="160"></canvas></div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+      <div class="chart-card"><h6 class="fw-700 mb-3">⚖️ Weight Trend</h6>
+        <canvas id="weightChart" height="160"></canvas></div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+      <div class="chart-card"><h6 class="fw-700 mb-3">😰 Stress Level</h6>
+        <canvas id="stressChart" height="160"></canvas></div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+      <div class="chart-card"><h6 class="fw-700 mb-3">👣 Steps Walked</h6>
+        <canvas id="stepsChart" height="160"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ── AI Coach Tips Preview ──────────────────────────────── -->
+  {% if coach_tips %}
+  <div class="glass-card p-4 mb-5 animate-fade-up">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="fw-700 mb-0"><i class="bi bi-stars me-2 text-warning"></i>AI Health Coach</h5>
+      <a href="{{ url_for('tracker.coach') }}" class="text-success small">View all tips →</a>
+    </div>
+    {% for tip in coach_tips %}
+    <div class="tip-card {{ tip.type }}">
+      <i class="bi {{ tip.icon }} tip-icon"></i>
+      <div>
+        <div class="fw-600 small mb-1">{{ tip.category }}</div>
+        <div class="text-muted small">{{ tip.message }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ── Recent Logs Table ──────────────────────────────────── -->
+  <div class="glass-card p-4 animate-fade-up">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <h5 class="fw-700 mb-0"><i class="bi bi-table me-2 text-success"></i>Recent Logs</h5>
+      <div class="d-flex gap-2">
+        <a href="{{ url_for('tracker.weekly_summary') }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">Weekly</a>
+        <a href="{{ url_for('tracker.monthly_summary') }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">Monthly</a>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-borderless align-middle mb-0" style="color:var(--text-primary);">
+        <thead>
+          <tr style="color:var(--text-muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;">
+            <th>Date</th><th>Score</th><th>Sleep</th><th>Water</th><th>Exercise</th><th>Stress</th><th>Mood</th><th>Weight</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in recent_logs[:10] %}
+          <tr style="border-bottom:1px solid rgba(255,255,255,.04);">
+            <td class="small fw-600">{{ log.log_date.strftime('%d %b') }}</td>
+            <td>
+              <span class="fw-700 gradient-text">{{ log.healthy_habits_score }}</span>
+              <span class="text-muted small">/100</span>
+            </td>
+            <td class="small">{{ log.sleep_hours }}h</td>
+            <td class="small">{{ log.water_intake }}L</td>
+            <td class="small">{{ log.exercise_minutes }}m</td>
+            <td>
+              <span class="small {% if log.stress_level >= 7 %}text-danger{% elif log.stress_level <= 3 %}text-success{% else %}text-warning{% endif %}">
+                {{ log.stress_level }}/10
+              </span>
+            </td>
+            <td class="small">{{ log.mood }}</td>
+            <td class="small">{{ log.weight }}kg</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% endif %}{# end log_count > 0 #}
+
+  <!-- Quick nav links -->
+  <div class="d-flex gap-3 justify-content-center mt-5 flex-wrap">
+    <a href="{{ url_for('tracker.weekly_summary') }}" class="btn btn-outline-secondary rounded-pill px-4">
+      <i class="bi bi-calendar-week me-2"></i>Weekly Report
+    </a>
+    <a href="{{ url_for('tracker.monthly_summary') }}" class="btn btn-outline-secondary rounded-pill px-4">
+      <i class="bi bi-calendar-month me-2"></i>Monthly Report
+    </a>
+    <a href="{{ url_for('tracker.comparison') }}" class="btn btn-outline-secondary rounded-pill px-4">
+      <i class="bi bi-bar-chart-steps me-2"></i>Compare
+    </a>
+    <a href="{{ url_for('tracker.coach') }}" class="btn btn-outline-warning rounded-pill px-4">
+      <i class="bi bi-stars me-2"></i>AI Coach
+    </a>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const chartData = {{ chart_data | safe }};
+
+const CHART_DEFAULTS = {
+  responsive: true,
+  plugins: { legend: { display: false } },
+  scales: {
+    x: { grid: { color: 'rgba(255,255,255,.05)' }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+    y: { grid: { color: 'rgba(255,255,255,.05)' }, ticks: { color: '#94a3b8', font: { size: 10 } } }
+  }
+};
+
+function makeGradient(ctx, color1, color2) {
+  const g = ctx.createLinearGradient(0, 0, 0, 200);
+  g.addColorStop(0, color1);
+  g.addColorStop(1, color2);
+  return g;
+}
+
+// ── Health Score Line Chart (large) ──────────────────────────
+const hsCtx = document.getElementById('healthScoreChart');
+let healthChart;
+
+function buildHealthChart(data) {
+  if (healthChart) healthChart.destroy();
+  const g = makeGradient(hsCtx.getContext('2d'), 'rgba(108,99,255,.4)', 'rgba(108,99,255,.02)');
+  healthChart = new Chart(hsCtx, {
+    type: 'line',
+    data: {
+      labels: data.labels,
+      datasets: [{
+        label: 'Health Score',
+        data: data.health_score,
+        borderColor: '#6C63FF', borderWidth: 2.5,
+        backgroundColor: g,
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#6C63FF', pointRadius: 4, pointHoverRadius: 7
+      }]
+    },
+    options: { ...CHART_DEFAULTS, scales: { ...CHART_DEFAULTS.scales, y: { ...CHART_DEFAULTS.scales.y, min: 0, max: 100 } } }
+  });
+}
+
+buildHealthChart(chartData);
+
+function loadChart(days) {
+  ['btn7','btn30'].forEach(id => document.getElementById(id)?.classList.remove('active'));
+  document.getElementById('btn' + days)?.classList.add('active');
+  fetch(`{{ url_for('tracker.chart_data_api') }}?days=${days}`)
+    .then(r => r.json()).then(d => buildHealthChart(d));
+}
+
+// ── Mini Charts ───────────────────────────────────────────────
+const minis = [
+  { id: 'sleepChart',    key: 'sleep',    color: '#6C63FF', label: 'hrs' },
+  { id: 'waterChart',    key: 'water',    color: '#4ecdc4', label: 'L'   },
+  { id: 'exerciseChart', key: 'exercise', color: '#10b981', label: 'min' },
+  { id: 'weightChart',   key: 'weight',   color: '#f97316', label: 'kg'  },
+  { id: 'stressChart',   key: 'stress',   color: '#ef4444', label: '/10' },
+  { id: 'stepsChart',    key: 'steps',    color: '#fbbf24', label: 'steps'},
+];
+
+minis.forEach(({ id, key, color, label }) => {
+  const el = document.getElementById(id);
+  if (!el || !chartData[key]) return;
+  const g = makeGradient(el.getContext('2d'), color.replace(')',', .35)').replace('rgb','rgba'), color.replace(')',', .02)').replace('rgb','rgba'));
+  new Chart(el, {
+    type: 'line',
+    data: {
+      labels: chartData.labels,
+      datasets: [{ data: chartData[key], borderColor: color, borderWidth: 2, backgroundColor: g, fill: true, tension: 0.4, pointRadius: 2 }]
+    },
+    options: { ...CHART_DEFAULTS, scales: { x: { ...CHART_DEFAULTS.scales.x, ticks: { maxTicksLimit: 5, font: { size: 9 } } }, y: CHART_DEFAULTS.scales.y } }
+  });
+});
+</script>
+{% endblock %}

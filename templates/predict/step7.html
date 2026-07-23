@@ -1,0 +1,32 @@
+{% extends "base.html" %}{% block title %}Step 7 – Mental Health{% endblock %}
+{% block content %}
+<div class="container-xl py-5" style="max-width:720px;">
+  <div class="step-wizard mb-5">{% for i, label in [(1,'Personal'),(2,'Lifestyle'),(3,'Food'),(4,'Medical'),(5,'Family'),(6,'Exercise'),(7,'Mental')] %}<div class="step-item {{ 'active' if step == i else ('done' if step > i else 'inactive') }}"><div class="step-circle">{% if step > i %}<i class="bi bi-check2"></i>{% else %}{{ i }}{% endif %}</div><div class="step-label">{{ label }}</div></div>{% endfor %}</div>
+  <div class="glass-card p-4 p-md-5">
+    <h2 class="fs-4 fw-700 mb-1">Mental Health & Final Details</h2>
+    <p class="text-muted small mb-4">Last step! Your mental health is just as important as physical health.</p>
+    <form method="POST" novalidate>{{ form.hidden_tag() }}
+      <div class="row g-3 mb-4">
+        {% for field in [form.depression_symptoms, form.anxiety_symptoms, form.mental_health_support] %}
+        <div class="col-12">
+          <div class="form-check p-3 rounded-3" style="background:var(--surface-overlay);border:1px solid var(--surface-border);">
+            {{ field(class="form-check-input", id="q7_" ~ field.name) }}
+            <label class="form-check-label small fw-500" for="{{ 'q7_' ~ field.name }}">{{ field.label.text }}</label>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="row g-3 mb-4">
+        <div class="col-6">{{ form.meditation_yoga.label(class="form-label") }}{{ form.meditation_yoga(class="form-select", id="q7Meditation") }}</div>
+        <div class="col-6">{{ form.pregnancy_status.label(class="form-label") }}{{ form.pregnancy_status(class="form-select", id="q7Pregnancy") }}</div>
+      </div>
+      <div class="alert alert-success alert-sm py-2 small mb-4">
+        <i class="bi bi-check2-circle me-1"></i> Almost done! Click below to run your AI health analysis.
+      </div>
+      <div class="d-flex justify-content-between">
+        <a href="{{ url_for('predict.step6', qid=qid) }}" class="btn btn-outline-secondary rounded-pill px-4">← Back</a>
+        {{ form.submit(class="btn btn-gradient rounded-pill px-4 py-2", id="q7Submit") }}
+      </div>
+    </form>
+  </div>
+</div>{% endblock %}

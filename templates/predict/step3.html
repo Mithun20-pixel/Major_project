@@ -1,0 +1,27 @@
+{% extends "base.html" %}{% block title %}Step 3 – Food Habits{% endblock %}
+{% block content %}
+<div class="container-xl py-5" style="max-width:720px;">
+  <div class="step-wizard mb-5">{% for i, label in [(1,'Personal'),(2,'Lifestyle'),(3,'Food'),(4,'Medical'),(5,'Family'),(6,'Exercise'),(7,'Mental')] %}<div class="step-item {{ 'active' if step == i else ('done' if step > i else 'inactive') }}"><div class="step-circle">{% if step > i %}<i class="bi bi-check2"></i>{% else %}{{ i }}{% endif %}</div><div class="step-label">{{ label }}</div></div>{% endfor %}</div>
+  <div class="glass-card p-4 p-md-5">
+    <h2 class="fs-4 fw-700 mb-1">Food & Diet</h2>
+    <p class="text-muted small mb-4">Your dietary habits are key drivers of chronic disease risk.</p>
+    <form method="POST" novalidate>{{ form.hidden_tag() }}
+      <div class="row g-3 mb-3">
+        <div class="col-6">{{ form.diet_type.label(class="form-label") }}{{ form.diet_type(class="form-select" + (" is-invalid" if form.diet_type.errors else ""), id="q3Diet") }}{% for e in form.diet_type.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}</div>
+        <div class="col-6">{{ form.meals_per_day.label(class="form-label") }}{{ form.meals_per_day(class="form-control", placeholder="3", id="q3Meals") }}</div>
+      </div>
+      <div class="row g-3 mb-3">
+        <div class="col-6">{{ form.water_intake_L.label(class="form-label") }}{{ form.water_intake_L(class="form-control" + (" is-invalid" if form.water_intake_L.errors else ""), placeholder="2.5", id="q3Water") }}{% for e in form.water_intake_L.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}</div>
+        <div class="col-6">{{ form.fast_food_per_week.label(class="form-label") }}{{ form.fast_food_per_week(class="form-control", placeholder="2", id="q3FastFood") }}</div>
+      </div>
+      <div class="row g-3 mb-4">
+        <div class="col-6">{{ form.sugar_intake.label(class="form-label") }}{{ form.sugar_intake(class="form-select" + (" is-invalid" if form.sugar_intake.errors else ""), id="q3Sugar") }}{% for e in form.sugar_intake.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}</div>
+        <div class="col-6">{{ form.fruit_veg_servings.label(class="form-label") }}{{ form.fruit_veg_servings(class="form-control", placeholder="5", id="q3FruitVeg") }}</div>
+      </div>
+      <div class="d-flex justify-content-between">
+        <a href="{{ url_for('predict.step2', qid=qid) }}" class="btn btn-outline-secondary rounded-pill px-4">← Back</a>
+        {{ form.submit(class="btn btn-gradient rounded-pill px-4", id="q3Submit") }}
+      </div>
+    </form>
+  </div>
+</div>{% endblock %}

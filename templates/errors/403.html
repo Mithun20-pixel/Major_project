@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}403 – Forbidden{% endblock %}
+{% block content %}
+<div class="container-xl text-center py-6" style="padding:8rem 0;">
+  <div style="font-size:6rem;line-height:1;" class="mb-4">🔒</div>
+  <h1 class="display-4 fw-800 gradient-text mb-3">403</h1>
+  <h2 class="fs-4 fw-600 mb-3">Access Denied</h2>
+  <p class="text-muted mb-5">You don't have permission to access this page.</p>
+  <a href="{{ url_for('main.index') }}" class="btn btn-gradient rounded-pill px-4 py-2">
+    <i class="bi bi-house me-2"></i>Back to Home
+  </a>
+</div>
+{% endblock %}

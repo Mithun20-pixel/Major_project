@@ -1,0 +1,18 @@
+{% extends "base.html" %}{% block title %}Upload Dataset{% endblock %}
+{% block content %}
+<div class="container-xl py-5" style="max-width:600px;">
+  <h1 class="section-title mb-4">📂 Upload Dataset</h1>
+  <div class="glass-card p-4">
+    <form method="POST" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="mb-4">
+        <label class="form-label fw-600">Training Dataset (CSV or Excel)</label>
+        <input type="file" name="dataset" class="form-control" accept=".csv,.xlsx,.xls" id="datasetFile">
+        <div class="form-text text-muted small">Max 16 MB. CSV or Excel format.</div>
+      </div>
+      <button type="submit" class="btn btn-gradient w-100 rounded-pill py-2" id="uploadSubmit">
+        <i class="bi bi-upload me-2"></i>Upload Dataset
+      </button>
+    </form>
+  </div>
+</div>{% endblock %}

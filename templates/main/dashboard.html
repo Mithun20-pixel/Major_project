@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="container-xl py-5">
+
+  <!-- Welcome header -->
+  <div class="d-flex justify-content-between align-items-center mb-5 flex-wrap gap-3">
+    <div>
+      <h1 class="section-title mb-1">Welcome back, {{ current_user.full_name.split()[0] }} 👋</h1>
+      <p class="text-muted mb-0">Here's your health overview</p>
+    </div>
+    <a href="{{ url_for('predict.step1') }}" class="btn btn-gradient rounded-pill px-4 py-2" id="newAnalysisBtn">
+      <i class="bi bi-activity me-2"></i>New Analysis
+    </a>
+  </div>
+
+  <!-- Stat cards -->
+  <div class="row g-4 mb-5">
+    {% set stats = [
+      ('🩺', 'BMI', current_user.bmi|string if current_user.bmi else 'N/A', current_user.bmi_category),
+      ('📊', 'Analyses Done', predictions.total if predictions is defined else '0', 'Total predictions'),
+      ('⚡', 'Health Score',
+        latest_prediction.overall_health_score|round|int|string ~ '/100' if latest_prediction else 'No data',
+        'From last analysis'),
+      ('🎯', 'Risk Factors',
+        latest_prediction.disease_risks.values()|selectattr('risk_level','equalto','High')|list|length|string if latest_prediction else '—',
+        'High-risk diseases'),
+    ] %}
+    {% for icon, label, value, sub in stats %}
+    <div class="col-6 col-lg-3">
+      <div class="stat-card animate-fade-up delay-{{ loop.index * 100 }}">
+        <div class="stat-icon">{{ icon }}</div>
+        <div class="stat-value">{{ value }}</div>
+        <div class="stat-label">{{ label }}</div>
+        <div class="text-muted" style="font-size:0.75rem;margin-top:0.25rem;">{{ sub }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if latest_prediction %}
+  <!-- Latest disease risks -->
+  <div class="row g-4 mb-5">
+    <div class="col-lg-7">
+      <div class="glass-card p-4 h-100">
+        <h5 class="fw-700 mb-4"><i class="bi bi-shield-exclamation me-2 text-success"></i>Disease Risk Summary</h5>
+        {% for disease, data in latest_prediction.disease_risks.items() %}
+        <div class="mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="small fw-600">{{ disease }}</span>
+            <div class="d-flex align-items-center gap-2">
+              <span class="text-muted small">{{ data.probability }}%</span>
+              <span class="risk-badge risk-{{ data.risk_level|lower }}">{{ data.risk_level }}</span>
+            </div>
+          </div>
+          <div class="progress" style="height:7px;border-radius:50px;background:rgba(255,255,255,0.05);">
+            <div class="progress-bar risk-{{ data.risk_level|lower }}-bar"
+                 style="width:{{ data.probability }}%;border-radius:50px;"
+                 role="progressbar"></div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="glass-card p-4 h-100">
+        <h5 class="fw-700 mb-4"><i class="bi bi-heart-pulse me-2 text-success"></i>Health Scores</h5>
+        <canvas id="healthScoreRadar" height="220" aria-label="Health scores radar chart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recommendations preview -->
+  {% set recs = latest_prediction.recommendations.limit(3).all() %}
+  {% if recs %}
+  <div class="mb-5">
+    <h5 class="fw-700 mb-3"><i class="bi bi-lightbulb me-2 text-warning"></i>Top Recommendations</h5>
+    <div class="row g-3">
+      {% for rec in recs %}
+      <div class="col-md-4">
+        <div class="rec-card h-100">
+          <div class="d-flex gap-3 align-items-start">
+            <div class="rec-icon"><i class="bi {{ rec.icon or 'bi-heart' }}"></i></div>
+            <div>
+              <div class="fw-600 mb-1 small">{{ rec.title }}</div>
+              <div class="text-muted" style="font-size:0.78rem;">{{ rec.description[:120] }}{% if rec.description|length > 120 %}...{% endif %}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ── Daily Health Log CTA ─────────────────────────────────── -->
+  {% if latest_prediction %}
+  <div class="glass-card p-4 mb-5 animate-fade-up" style="border:1px solid rgba(108,99,255,.2);background:linear-gradient(135deg,rgba(108,99,255,.07),rgba(78,205,196,.04));">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <div style="font-size:2.5rem;">📋</div>
+        <div>
+          <h5 class="fw-700 mb-1">Daily Health Log</h5>
+          {% if today_log %}
+          <p class="text-muted mb-0 small">
+            ✅ Logged today — Health Score:
+            <span class="gradient-text fw-700">{{ today_log.healthy_habits_score }}/100</span>
+          </p>
+          {% else %}
+          <p class="text-muted mb-0 small">Track your daily lifestyle to monitor how your habits affect your disease risks.</p>
+          {% endif %}
+        </div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        {% if not today_log %}
+        <a href="{{ url_for('tracker.log_form') }}" class="btn btn-gradient rounded-pill px-4 py-2" id="logTodayBtn">
+          <i class="bi bi-plus-circle me-2"></i>Log Today
+        </a>
+        {% endif %}
+        <a href="{{ url_for('tracker.progress') }}" class="btn btn-outline-secondary rounded-pill px-4 py-2">
+          <i class="bi bi-graph-up me-2"></i>View Progress
+        </a>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <!-- No predictions yet -->
+  <div class="glass-card p-5 text-center">
+    <div style="font-size:4rem;" class="mb-3">🩺</div>
+    <h3 class="fw-700 mb-2">No Analysis Yet</h3>
+    <p class="text-muted mb-4">Complete your first health questionnaire to see your personalised risk predictions, health scores, and recommendations.</p>
+    <a href="{{ url_for('predict.step1') }}" class="btn btn-gradient rounded-pill px-4 py-2" id="startFirstAnalysis">
+      <i class="bi bi-rocket-takeoff me-2"></i>Start My First Analysis
+    </a>
+  </div>
+  {% endif %}
+
+  <!-- Recent history table -->
+  {% if recent_predictions %}
+  <div class="mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="fw-700 mb-0"><i class="bi bi-clock-history me-2 text-success"></i>Recent Analyses</h5>
+      <a href="{{ url_for('main.history') }}" class="text-success small">View all →</a>
+    </div>
+    <div class="glass-card p-3">
+      <div class="table-responsive">
+        <table class="table table-borderless align-middle mb-0" style="color:var(--text-primary);">
+          <thead>
+            <tr style="color:var(--text-muted);font-size:0.78rem;text-transform:uppercase;letter-spacing:.05em;">
+              <th>Date</th><th>Health Score</th><th>High Risk</th><th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in recent_predictions %}
+            <tr>
+              <td class="small">{{ p.created_at.strftime('%d %b %Y, %H:%M') }}</td>
+              <td>
+                <span class="fw-700 gradient-text">
+                  {{ p.overall_health_score|round|int if p.overall_health_score else '—' }}
+                </span>
+                <span class="text-muted small">/100</span>
+              </td>
+              <td>
+                {% set high = p.disease_risks.values()|selectattr('risk_level','equalto','High')|list|length %}
+                {% if high > 0 %}
+                  <span class="risk-badge risk-high">{{ high }} disease{{ 's' if high != 1 }}</span>
+                {% else %}
+                  <span class="risk-badge risk-low">None</span>
+                {% endif %}
+              </td>
+              <td>
+                <a href="{{ url_for('predict.results', prediction_id=p.id) }}"
+                   class="btn btn-sm btn-outline-success rounded-pill px-3">View</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if latest_prediction %}
+<script>
+const scores = {{ latest_prediction.health_scores | tojson }};
+const ctx = document.getElementById('healthScoreRadar');
+if (ctx) {
+  new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: Object.keys(scores),
+      datasets: [{
+        label: 'Health Score',
+        data: Object.values(scores),
+        backgroundColor: 'rgba(16,185,129,0.15)',
+        borderColor: '#10b981',
+        borderWidth: 2,
+        pointBackgroundColor: '#10b981',
+        pointRadius: 4,
+      }]
+    },
+    options: {
+      scales: {
+        r: {
+          min: 0, max: 100,
+          grid: { color: 'rgba(255,255,255,0.07)' },
+          ticks: { color: '#64748b', font: { size: 9 }, backdropColor: 'transparent' },
+          pointLabels: { color: '#94a3b8', font: { size: 10 } }
+        }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+}
+</script>
+{% endif %}
+{% endblock %}

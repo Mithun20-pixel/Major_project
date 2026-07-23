@@ -1,0 +1,58 @@
+# ── Python ────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# ── Virtual environments ──────────────────────────────────────────────
+venv/
+env/
+.venv/
+ENV/
+
+# ── Environment secrets ───────────────────────────────────────────────
+.env
+*.env
+
+# ── Flask / SQLite dev db ─────────────────────────────────────────────
+*.db
+*.sqlite3
+instance/
+
+# ── Flask-Migrate ─────────────────────────────────────────────────────
+migrations/
+
+# ── Generated runtime files ───────────────────────────────────────────
+uploads/
+datasets/
+reports/
+ml/saved_models/
+
+# ── ML / Jupyter ──────────────────────────────────────────────────────
+*.ipynb
+.ipynb_checkpoints/
+*.pkl
+*.joblib
+
+# ── OS ────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+
+# ── IDE ───────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.code-workspace
+
+# ── Pytest / Coverage ─────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ── Docker ────────────────────────────────────────────────────────────
+*.tar

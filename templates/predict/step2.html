@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Step 2 – Lifestyle{% endblock %}
+{% block content %}
+<div class="container-xl py-5" style="max-width:720px;">
+  <div class="step-wizard mb-5">
+    {% for i, label in [(1,'Personal'),(2,'Lifestyle'),(3,'Food'),(4,'Medical'),(5,'Family'),(6,'Exercise'),(7,'Mental')] %}
+    <div class="step-item {{ 'active' if step == i else ('done' if step > i else 'inactive') }}">
+      <div class="step-circle">{% if step > i %}<i class="bi bi-check2"></i>{% else %}{{ i }}{% endif %}</div>
+      <div class="step-label">{{ label }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="glass-card p-4 p-md-5">
+    <h2 class="fs-4 fw-700 mb-1">Lifestyle Habits</h2>
+    <p class="text-muted small mb-4">Your daily habits have a huge impact on disease risk.</p>
+    <form method="POST" novalidate>
+      {{ form.hidden_tag() }}
+      <div class="row g-3 mb-3">
+        <div class="col-6">
+          {{ form.smoking_status.label(class="form-label") }}
+          {{ form.smoking_status(class="form-select" + (" is-invalid" if form.smoking_status.errors else ""), id="q2Smoke") }}
+          {% for e in form.smoking_status.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-6">
+          {{ form.alcohol_intake.label(class="form-label") }}
+          {{ form.alcohol_intake(class="form-select" + (" is-invalid" if form.alcohol_intake.errors else ""), id="q2Alcohol") }}
+          {% for e in form.alcohol_intake.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+        </div>
+      </div>
+      <div class="row g-3 mb-3">
+        <div class="col-6">
+          {{ form.sleep_hours.label(class="form-label") }}
+          {{ form.sleep_hours(class="form-control" + (" is-invalid" if form.sleep_hours.errors else ""), placeholder="7.5", id="q2Sleep") }}
+          {% for e in form.sleep_hours.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-6">
+          {{ form.screen_time_hours.label(class="form-label") }}
+          {{ form.screen_time_hours(class="form-control", placeholder="4", id="q2Screen") }}
+        </div>
+      </div>
+      <div class="mb-3">
+        {{ form.stress_level.label(class="form-label") }}
+        {{ form.stress_level(class="form-control" + (" is-invalid" if form.stress_level.errors else ""), placeholder="1-10", id="q2Stress") }}
+        {% for e in form.stress_level.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+      </div>
+      <div class="mb-4">
+        {{ form.travel_frequency.label(class="form-label") }}
+        {{ form.travel_frequency(class="form-select", id="q2Travel") }}
+      </div>
+      <div class="d-flex justify-content-between">
+        <a href="{{ url_for('predict.step1') }}" class="btn btn-outline-secondary rounded-pill px-4">← Back</a>
+        {{ form.submit(class="btn btn-gradient rounded-pill px-4", id="q2Submit") }}
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

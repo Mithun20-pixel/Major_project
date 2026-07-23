@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block title %}Your Health Results{% endblock %}
+{% block content %}
+<div class="container-xl py-5">
+
+  <!-- Header -->
+  <div class="text-center mb-5 animate-fade-up">
+    <span style="font-size:3rem;">🩺</span>
+    <h1 class="section-title mt-2 mb-1">Your Health Risk Analysis</h1>
+    <p class="text-muted">Analysed on {{ prediction.created_at.strftime('%d %B %Y at %H:%M') }}</p>
+  </div>
+
+  <!-- Health Score Overview -->
+  <div class="row g-4 mb-5">
+    <div class="col-12">
+      <div class="glass-card p-4">
+        <h5 class="fw-700 mb-4"><i class="bi bi-heart-pulse me-2 text-success"></i>Health Scores</h5>
+        <div class="row g-3 text-center">
+          {% for label, val in health_scores.items() %}
+          <div class="col-6 col-md-3 col-lg-{% if loop.first %}12{% else %}auto{% endif %}">
+            {% if loop.first %}
+            <!-- Overall score highlight -->
+            <div class="p-4 rounded-3" style="background:var(--grad-card);border:1px solid rgba(16,185,129,.2);">
+              <div class="fw-800 gradient-text" style="font-size:3rem;">{{ val|round|int }}</div>
+              <div class="fw-600">{{ label }}</div>
+              <div class="text-muted small">Overall Health Score</div>
+            </div>
+            {% else %}
+            <div class="p-3 rounded-3" style="background:var(--surface-overlay);">
+              <div class="fw-700 gradient-text fs-4">{{ val|round|int }}</div>
+              <div class="text-muted small">{{ label }}</div>
+              <div class="progress mt-2" style="height:4px;border-radius:4px;background:rgba(255,255,255,0.08);">
+                <div class="progress-bar" style="width:{{ val }}%;background:var(--grad-primary);border-radius:4px;"></div>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Disease Risks -->
+  <div class="glass-card p-4 mb-5 animate-fade-up delay-100">
+    <h5 class="fw-700 mb-4"><i class="bi bi-shield-exclamation me-2 text-success"></i>Disease Risk Predictions</h5>
+    <div class="row g-3">
+      {% for disease, data in disease_risks.items() %}
+      <div class="col-md-6">
+        <div class="p-3 rounded-3" style="background:var(--surface-overlay);">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="fw-600 small">{{ disease }}</span>
+            <div class="d-flex align-items-center gap-2">
+              <span class="text-muted small fw-600">{{ data.probability }}%</span>
+              <span class="risk-badge risk-{{ data.risk_level|lower }}">{{ data.risk_level }}</span>
+            </div>
+          </div>
+          <div class="progress" style="height:8px;border-radius:50px;background:rgba(255,255,255,0.05);">
+            <div class="progress-bar risk-{{ data.risk_level|lower }}-bar"
+                 style="width:{{ data.probability }}%;border-radius:50px;" role="progressbar"></div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="row g-4 mb-5">
+    <!-- Positive factors -->
+    <div class="col-md-6">
+      <div class="glass-card p-4 h-100 animate-fade-up delay-200">
+        <h5 class="fw-700 mb-3 text-success"><i class="bi bi-arrow-up-circle me-2"></i>Protective Factors</h5>
+        {% if positive_factors %}
+          {% for f in positive_factors %}
+          <div class="rec-card mb-2">
+            <div class="d-flex gap-2">
+              <i class="bi bi-check-circle-fill text-success mt-1"></i>
+              <div>
+                <div class="fw-600 small">{{ f.feature }} — {{ f.value }}</div>
+                <div class="text-muted" style="font-size:0.78rem;">{{ f.description }}</div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p class="text-muted small">No significant protective factors detected.</p>
+        {% endif %}
+      </div>
+    </div>
+    <!-- Negative factors -->
+    <div class="col-md-6">
+      <div class="glass-card p-4 h-100 animate-fade-up delay-300">
+        <h5 class="fw-700 mb-3 text-danger"><i class="bi bi-arrow-down-circle me-2"></i>Risk Factors</h5>
+        {% if negative_factors %}
+          {% for f in negative_factors %}
+          <div class="rec-card mb-2">
+            <div class="d-flex gap-2">
+              <i class="bi bi-exclamation-circle-fill text-danger mt-1"></i>
+              <div>
+                <div class="fw-600 small">{{ f.feature }} — {{ f.value }}</div>
+                <div class="text-muted" style="font-size:0.78rem;">{{ f.description }}</div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p class="text-muted small">No significant risk factors detected. Great job!</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Recommendations -->
+  {% if recommendations %}
+  <div class="glass-card p-4 mb-5 animate-fade-up delay-400">
+    <h5 class="fw-700 mb-4"><i class="bi bi-lightbulb me-2 text-warning"></i>Personalised Recommendations</h5>
+    <div class="row g-3">
+      {% for rec in recommendations %}
+      <div class="col-md-6">
+        <div class="rec-card h-100">
+          <div class="d-flex gap-3 align-items-start">
+            <div class="rec-icon flex-shrink-0">
+              <i class="bi {{ rec.icon or 'bi-heart' }}"></i>
+            </div>
+            <div>
+              <div class="fw-700 mb-1">{{ rec.title }}</div>
+              <div class="text-muted small mb-2">{{ rec.description }}</div>
+              {% if rec.related_disease %}
+              <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25" style="font-size:0.65rem;">
+                {{ rec.related_disease }}
+              </span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Actions -->
+  <div class="d-flex flex-wrap gap-3 justify-content-center">
+    <a href="{{ url_for('predict.step1') }}" class="btn btn-gradient rounded-pill px-4 py-2" id="newAnalysisFromResults">
+      <i class="bi bi-activity me-2"></i>New Analysis
+    </a>
+    <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary rounded-pill px-4 py-2">
+      <i class="bi bi-grid me-2"></i>Dashboard
+    </a>
+  </div>
+
+  <!-- Medical disclaimer -->
+  <div class="mt-5 p-3 rounded-3 text-center" style="background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.2);">
+    <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+    <span class="small text-muted">
+      <strong>Medical Disclaimer:</strong> These predictions are AI-generated estimates for educational purposes only.
+      Consult a qualified healthcare professional for medical advice.
+    </span>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}{% block title %}Step 4 – Medical History{% endblock %}
+{% block content %}
+<div class="container-xl py-5" style="max-width:720px;">
+  <div class="step-wizard mb-5">{% for i, label in [(1,'Personal'),(2,'Lifestyle'),(3,'Food'),(4,'Medical'),(5,'Family'),(6,'Exercise'),(7,'Mental')] %}<div class="step-item {{ 'active' if step == i else ('done' if step > i else 'inactive') }}"><div class="step-circle">{% if step > i %}<i class="bi bi-check2"></i>{% else %}{{ i }}{% endif %}</div><div class="step-label">{{ label }}</div></div>{% endfor %}</div>
+  <div class="glass-card p-4 p-md-5">
+    <h2 class="fs-4 fw-700 mb-1">Medical History</h2>
+    <p class="text-muted small mb-4">Current health conditions and vital measurements.</p>
+    <form method="POST" novalidate>{{ form.hidden_tag() }}
+      <div class="mb-3">{{ form.existing_diseases.label(class="form-label") }}{{ form.existing_diseases(class="form-control", rows="2", placeholder="e.g. Type 2 Diabetes, Asthma — or None", id="q4Diseases") }}</div>
+      <div class="mb-3">{{ form.current_medications.label(class="form-label") }}{{ form.current_medications(class="form-control", rows="2", placeholder="e.g. Metformin — or None", id="q4Meds") }}</div>
+      <div class="row g-3 mb-3">
+        <div class="col-6">{{ form.blood_pressure_systolic.label(class="form-label") }}{{ form.blood_pressure_systolic(class="form-control", placeholder="120", id="q4BpSys") }}</div>
+        <div class="col-6">{{ form.blood_pressure_diastolic.label(class="form-label") }}{{ form.blood_pressure_diastolic(class="form-control", placeholder="80", id="q4BpDia") }}</div>
+      </div>
+      <div class="row g-3 mb-3">
+        <div class="col-6">{{ form.blood_sugar_fasting.label(class="form-label") }}{{ form.blood_sugar_fasting(class="form-control", placeholder="90 mg/dL", id="q4Sugar") }}</div>
+        <div class="col-6">{{ form.cholesterol_level.label(class="form-label") }}{{ form.cholesterol_level(class="form-control", placeholder="180 mg/dL", id="q4Chol") }}</div>
+      </div>
+      <div class="mb-4">{{ form.vaccination_status.label(class="form-label") }}{{ form.vaccination_status(class="form-select", id="q4Vaccine") }}</div>
+      <div class="d-flex justify-content-between">
+        <a href="{{ url_for('predict.step3', qid=qid) }}" class="btn btn-outline-secondary rounded-pill px-4">← Back</a>
+        {{ form.submit(class="btn btn-gradient rounded-pill px-4", id="q4Submit") }}
+      </div>
+    </form>
+  </div>
+</div>{% endblock %}

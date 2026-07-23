@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+{% block title %}Progress Comparison{% endblock %}
+
+{% block content %}
+<div class="container-xl py-5">
+
+  <div class="text-center mb-5 animate-fade-up">
+    <span style="font-size:3rem;">⚖️</span>
+    <h1 class="section-title mt-2 mb-1">Progress Comparison</h1>
+    <p class="text-muted">Baseline assessment vs. your current lifestyle</p>
+  </div>
+
+  {% if not comparison %}
+  <div class="glass-card p-5 text-center">
+    <div style="font-size:3.5rem;" class="mb-3">📋</div>
+    <h3 class="fw-700 mb-2">Not Enough Data</h3>
+    <p class="text-muted mb-4">You need a completed health questionnaire and at least one daily log to see the comparison.</p>
+    <div class="d-flex gap-3 justify-content-center">
+      <a href="{{ url_for('predict.step1') }}" class="btn btn-gradient rounded-pill px-4">Start Analysis</a>
+      <a href="{{ url_for('tracker.log_form') }}" class="btn btn-outline-secondary rounded-pill px-4">Log Today</a>
+    </div>
+  </div>
+
+  {% else %}
+
+  <!-- Timeline badges -->
+  <div class="d-flex align-items-center justify-content-center gap-4 mb-5 flex-wrap">
+    <div class="glass-card px-4 py-2 text-center">
+      <div class="text-muted small">Baseline Assessment</div>
+      <div class="fw-700 gradient-text">{{ comparison.baseline_date }}</div>
+    </div>
+    <div style="font-size:1.5rem; color:var(--text-muted);">→</div>
+    <div class="glass-card px-4 py-2 text-center">
+      <div class="text-muted small">Latest Log</div>
+      <div class="fw-700 gradient-text">{{ comparison.current_date }}</div>
+    </div>
+  </div>
+
+  <!-- Improved / Worsened summary -->
+  <div class="row g-4 mb-5">
+    <div class="col-md-6">
+      <div class="glass-card p-4 h-100" style="border-color:rgba(16,185,129,.25);">
+        <h5 class="fw-700 mb-3 text-success"><i class="bi bi-arrow-down-circle me-2"></i>Improved</h5>
+        {% if comparison.improved %}
+          {% for disease in comparison.improved %}
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <i class="bi bi-check-circle-fill text-success"></i>
+            <span class="small">{{ disease }}</span>
+            <span class="ms-auto badge rounded-pill" style="background:rgba(16,185,129,.15);color:#10b981;font-size:.7rem;">
+              {{ comparison.diff[disease] }}%
+            </span>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p class="text-muted small">No diseases have improved yet — keep logging daily!</p>
+        {% endif %}
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="glass-card p-4 h-100" style="border-color:rgba(239,68,68,.2);">
+        <h5 class="fw-700 mb-3 text-danger"><i class="bi bi-arrow-up-circle me-2"></i>Needs Attention</h5>
+        {% if comparison.worsened %}
+          {% for disease in comparison.worsened %}
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <i class="bi bi-exclamation-circle-fill text-danger"></i>
+            <span class="small">{{ disease }}</span>
+            <span class="ms-auto badge rounded-pill" style="background:rgba(239,68,68,.12);color:#ef4444;font-size:.7rem;">
+              +{{ comparison.diff[disease] }}%
+            </span>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p class="text-muted small text-success">🎉 No diseases have worsened!</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Disease Risk Comparison Table -->
+  <div class="glass-card p-4 mb-5 animate-fade-up">
+    <h5 class="fw-700 mb-4"><i class="bi bi-table me-2 text-success"></i>Disease Risk Comparison</h5>
+    <div class="table-responsive">
+      <table class="table table-borderless align-middle mb-0" style="color:var(--text-primary);">
+        <thead>
+          <tr style="color:var(--text-muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;">
+            <th>Disease</th><th>Baseline</th><th>Current</th><th>Change</th><th>Trend</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for disease, change in comparison.diff.items() %}
+          {% set base_prob = comparison.baseline.get(disease, 0) or 0 %}
+          {% set curr_prob = comparison.current.get(disease, 0) or 0 %}
+          <tr style="border-bottom:1px solid rgba(255,255,255,.04);">
+            <td class="fw-600 small">{{ disease }}</td>
+            <td class="small">
+              <span class="text-muted">{{ base_prob }}%</span>
+              <div class="progress mt-1" style="width:80px;height:4px;border-radius:99px;background:rgba(255,255,255,.08);">
+                <div class="progress-bar" style="width:{{ base_prob }}%;background:#94a3b8;border-radius:99px;"></div>
+              </div>
+            </td>
+            <td class="small">
+              <span class="fw-700">{{ curr_prob }}%</span>
+              <div class="progress mt-1" style="width:80px;height:4px;border-radius:99px;background:rgba(255,255,255,.08);">
+                <div class="progress-bar" style="width:{{ curr_prob }}%;background:{% if curr_prob > 66 %}#ef4444{% elif curr_prob > 33 %}#f97316{% else %}#10b981{% endif %};border-radius:99px;"></div>
+              </div>
+            </td>
+            <td>
+              <span class="badge rounded-pill" style="font-size:.72rem;background:{% if change < 0 %}rgba(16,185,129,.15);color:#10b981{% elif change > 0 %}rgba(239,68,68,.12);color:#ef4444{% else %}rgba(148,163,184,.1);color:#94a3b8{% endif %};">
+                {{ '+' if change > 0 else '' }}{{ change }}%
+              </span>
+            </td>
+            <td>
+              {% if change < -1 %}<i class="bi bi-arrow-down text-success"></i>
+              {% elif change > 1 %}<i class="bi bi-arrow-up text-danger"></i>
+              {% else %}<i class="bi bi-arrow-right text-muted"></i>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Health Score Comparison -->
+  <div class="glass-card p-4 mb-4 animate-fade-up delay-100">
+    <h5 class="fw-700 mb-4"><i class="bi bi-activity me-2 text-success"></i>Health Score Comparison</h5>
+    <div class="row g-3">
+      {% for dim, curr_val in comparison.score_current.items() %}
+      {% set base_val = comparison.score_baseline.get(dim, 0) or 0 %}
+      {% set diff = comparison.score_diff.get(dim, 0) or 0 %}
+      <div class="col-6 col-md-3">
+        <div class="p-3 rounded-3" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);">
+          <div class="text-muted small mb-1">{{ dim }}</div>
+          <div class="d-flex align-items-end gap-2 mb-1">
+            <span class="fw-800 gradient-text" style="font-size:1.4rem;">{{ curr_val|round|int }}</span>
+            <span class="text-muted small">/100</span>
+            {% if diff != 0 %}
+            <span class="ms-auto small {% if diff > 0 %}text-success{% else %}text-danger{% endif %}">
+              {{ '+' if diff > 0 else '' }}{{ diff }}
+            </span>
+            {% endif %}
+          </div>
+          <div class="d-flex gap-1">
+            <div class="flex-grow-1">
+              <div class="text-muted" style="font-size:.65rem;margin-bottom:2px;">Baseline</div>
+              <div class="progress" style="height:4px;border-radius:99px;background:rgba(255,255,255,.06);">
+                <div class="progress-bar" style="width:{{ base_val }}%;background:#64748b;border-radius:99px;"></div>
+              </div>
+            </div>
+            <div class="flex-grow-1">
+              <div class="text-muted" style="font-size:.65rem;margin-bottom:2px;">Current</div>
+              <div class="progress" style="height:4px;border-radius:99px;background:rgba(255,255,255,.06);">
+                <div class="progress-bar" style="width:{{ curr_val }}%;background:{% if diff >= 0 %}#10b981{% else %}#ef4444{% endif %};border-radius:99px;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Radar Chart Comparison -->
+  <div class="glass-card p-4 animate-fade-up delay-200">
+    <h5 class="fw-700 mb-4"><i class="bi bi-radar me-2 text-success"></i>Health Profile Radar</h5>
+    <div style="max-width:480px;margin:0 auto;">
+      <canvas id="comparisonRadar" height="320" aria-label="Health score comparison radar"></canvas>
+    </div>
+  </div>
+
+  {% endif %}
+
+  <div class="d-flex gap-3 justify-content-center mt-5 flex-wrap">
+    <a href="{{ url_for('tracker.progress') }}" class="btn btn-outline-secondary rounded-pill px-4">
+      <i class="bi bi-arrow-left me-2"></i>Progress
+    </a>
+    <a href="{{ url_for('tracker.coach') }}" class="btn btn-gradient rounded-pill px-4">
+      <i class="bi bi-stars me-2"></i>AI Coach
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if comparison %}
+<script>
+const scoreDims   = {{ comparison.score_current.keys() | list | tojson }};
+const baseScores  = {{ comparison.score_baseline.values() | list | tojson }};
+const currScores  = {{ comparison.score_current.values()  | list | tojson }};
+
+const ctx = document.getElementById('comparisonRadar');
+if (ctx) {
+  new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: scoreDims,
+      datasets: [
+        {
+          label: 'Baseline',
+          data: baseScores,
+          backgroundColor: 'rgba(148,163,184,.12)',
+          borderColor: '#64748b',
+          borderWidth: 2,
+          pointBackgroundColor: '#64748b',
+          pointRadius: 4,
+        },
+        {
+          label: 'Current',
+          data: currScores,
+          backgroundColor: 'rgba(16,185,129,.15)',
+          borderColor: '#10b981',
+          borderWidth: 2.5,
+          pointBackgroundColor: '#10b981',
+          pointRadius: 5,
+        }
+      ]
+    },
+    options: {
+      scales: {
+        r: {
+          min: 0, max: 100,
+          grid:        { color: 'rgba(255,255,255,.06)' },
+          ticks:       { color: '#64748b', font: { size: 9 }, backdropColor: 'transparent', stepSize: 25 },
+          pointLabels: { color: '#94a3b8', font: { size: 11 } }
+        }
+      },
+      plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } }
+    }
+  });
+}
+</script>
+{% endif %}
+{% endblock %}

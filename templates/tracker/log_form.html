@@ -1,0 +1,485 @@
+{% extends "base.html" %}
+{% block title %}Daily Health Log{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Daily Log Form Styles ─────────────────────────────────────── */
+.log-section-card {
+  background: var(--glass-bg, rgba(255,255,255,0.04));
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 1.75rem;
+  margin-bottom: 1.5rem;
+  transition: border-color .3s;
+}
+.log-section-card:hover { border-color: rgba(108,99,255,.35); }
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: .75rem;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.section-icon {
+  width: 42px; height: 42px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+.section-icon.purple { background: rgba(108,99,255,.18); }
+.section-icon.teal   { background: rgba(78,205,196,.18); }
+.section-icon.green  { background: rgba(16,185,129,.18); }
+.section-icon.orange { background: rgba(249,115,22,.18); }
+.section-icon.pink   { background: rgba(236,72,153,.18); }
+.section-icon.blue   { background: rgba(59,130,246,.18); }
+.section-icon.red    { background: rgba(239,68,68,.18); }
+
+.log-form-control {
+  background: rgba(255,255,255,0.05) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  color: var(--text-primary, #f1f5f9) !important;
+  border-radius: 10px !important;
+  transition: border-color .25s, box-shadow .25s;
+}
+.log-form-control:focus {
+  border-color: #6C63FF !important;
+  box-shadow: 0 0 0 3px rgba(108,99,255,.15) !important;
+  background: rgba(108,99,255,.05) !important;
+}
+.log-form-control option { background: #1e1e2e; }
+
+/* Toggle buttons for boolean fields */
+.toggle-group .btn-check + .btn {
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+  color: var(--text-muted, #94a3b8);
+  font-size: .85rem;
+  padding: .5rem 1rem;
+  transition: all .25s;
+}
+.toggle-group .btn-check:checked + .btn-outline-success {
+  background: rgba(16,185,129,.2);
+  border-color: #10b981;
+  color: #10b981;
+}
+.toggle-group .btn-check:checked + .btn-outline-danger {
+  background: rgba(239,68,68,.15);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+/* Slider style */
+.range-slider { accent-color: #6C63FF; }
+
+.mood-btn { cursor:pointer; font-size:1.4rem; transition: transform .2s; }
+.mood-btn:hover { transform: scale(1.2); }
+.mood-btn.active { filter: drop-shadow(0 0 8px #6C63FF); transform: scale(1.25); }
+
+/* Already logged card */
+.logged-today-card {
+  background: linear-gradient(135deg, rgba(16,185,129,.12), rgba(78,205,196,.08));
+  border: 1px solid rgba(16,185,129,.25);
+  border-radius: 20px;
+  padding: 3rem;
+  text-align: center;
+}
+
+/* Step progress bar */
+.form-progress { display: flex; gap: .5rem; margin-bottom: 2rem; }
+.form-progress-step {
+  flex: 1; height: 4px; border-radius: 99px;
+  background: rgba(255,255,255,.1);
+  transition: background .4s;
+}
+.form-progress-step.active { background: linear-gradient(90deg, #6C63FF, #4ecdc4); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-xl py-5">
+
+  <!-- Header -->
+  <div class="text-center mb-5 animate-fade-up">
+    <span style="font-size:3rem;">📋</span>
+    <h1 class="section-title mt-2 mb-1">Daily Health Log</h1>
+    <p class="text-muted">Track your lifestyle for personalised AI health insights</p>
+  </div>
+
+  {% if already_logged and today_log %}
+  <!-- ── Already Logged Today ─────────────────────────────────── -->
+  <div class="logged-today-card animate-fade-up">
+    <div style="font-size:3.5rem;" class="mb-3">✅</div>
+    <h3 class="fw-700 mb-2 text-success">Already Logged Today!</h3>
+    <p class="text-muted mb-1">
+      You logged your health data for <strong>{{ today_log.log_date.strftime('%B %d, %Y') }}</strong>.
+    </p>
+    <p class="text-muted mb-4">Your daily health score: <span class="fw-700 gradient-text fs-4">{{ today_log.healthy_habits_score }}</span>/100</p>
+    <div class="d-flex gap-3 justify-content-center flex-wrap">
+      <a href="{{ url_for('tracker.progress') }}" class="btn btn-gradient rounded-pill px-4 py-2">
+        <i class="bi bi-graph-up me-2"></i>View Progress
+      </a>
+      <a href="{{ url_for('tracker.coach') }}" class="btn btn-outline-secondary rounded-pill px-4 py-2">
+        <i class="bi bi-stars me-2"></i>AI Coach
+      </a>
+    </div>
+
+    <!-- Quick Stats from Today's Log -->
+    <div class="row g-3 mt-4">
+      {% set quick = [
+        ('😴', 'Sleep', today_log.sleep_hours ~ ' hrs'),
+        ('💧', 'Water', today_log.water_intake ~ ' L'),
+        ('🏃', 'Exercise', today_log.exercise_minutes ~ ' min'),
+        ('😰', 'Stress', today_log.stress_level ~ '/10'),
+        ('⚖️', 'Weight', today_log.weight ~ ' kg'),
+        ('😊', 'Mood', today_log.mood),
+      ] %}
+      {% for icon, label, val in quick %}
+      <div class="col-6 col-md-2">
+        <div class="p-3 rounded-3 text-center" style="background:rgba(255,255,255,.05);">
+          <div style="font-size:1.5rem;">{{ icon }}</div>
+          <div class="fw-700 gradient-text">{{ val }}</div>
+          <div class="text-muted" style="font-size:.75rem;">{{ label }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% else %}
+  <!-- ── Log Form ─────────────────────────────────────────────── -->
+  <form method="POST" action="{{ url_for('tracker.log_form') }}" id="dailyLogForm" novalidate>
+    {{ form.hidden_tag() }}
+
+    <!-- Section Progress Bar -->
+    <div class="form-progress" id="formProgress">
+      {% for i in range(8) %}<div class="form-progress-step {% if i == 0 %}active{% endif %}" data-step="{{ i }}"></div>{% endfor %}
+    </div>
+
+    <!-- ── Section 1: Date ───────────────────────────────────── -->
+    <div class="log-section-card animate-fade-up" id="section-0">
+      <div class="section-header">
+        <div class="section-icon purple">📅</div>
+        <div>
+          <div class="fw-700">Log Date</div>
+          <div class="text-muted small">Select the date you are logging for</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        {{ form.log_date.label(class="form-label fw-600 small") }}
+        {{ form.log_date(class="form-control log-form-control", id="log_date") }}
+        {% if form.log_date.errors %}
+          <div class="text-danger small mt-1">{{ form.log_date.errors[0] }}</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ── Section 2: Sleep ─────────────────────────────────── -->
+    <div class="log-section-card animate-fade-up delay-100" id="section-1">
+      <div class="section-header">
+        <div class="section-icon purple">😴</div>
+        <div>
+          <div class="fw-700">Sleep</div>
+          <div class="text-muted small">How well did you sleep?</div>
+        </div>
+      </div>
+      <div class="row g-4">
+        <div class="col-md-6">
+          {{ form.sleep_hours.label(class="form-label fw-600 small") }}
+          <div class="d-flex align-items-center gap-3">
+            {{ form.sleep_hours(class="form-control log-form-control", min="0", max="24", step="0.5", placeholder="e.g. 7.5") }}
+          </div>
+          {% if form.sleep_hours.errors %}
+            <div class="text-danger small mt-1">{{ form.sleep_hours.errors[0] }}</div>
+          {% endif %}
+        </div>
+        <div class="col-md-6">
+          {{ form.sleep_quality.label(class="form-label fw-600 small") }}
+          <div class="d-flex gap-2 mt-1">
+            {% for val, label in form.sleep_quality.choices %}
+            <div class="text-center">
+              <input type="radio" class="btn-check" name="sleep_quality" id="sq_{{ val }}" value="{{ val }}"
+                     {% if form.sleep_quality.data == val %}checked{% endif %}>
+              <label for="sq_{{ val }}" class="btn btn-sm px-3" style="border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.04);color:var(--text-muted);">
+                {{ val }}<br><span style="font-size:.65rem;">{{ label.split('–')[1].strip() if '–' in label else label }}</span>
+              </label>
+            </div>
+            {% endfor %}
+          </div>
+          {% if form.sleep_quality.errors %}
+            <div class="text-danger small mt-1">{{ form.sleep_quality.errors[0] }}</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Section 3: Hydration ─────────────────────────────── -->
+    <div class="log-section-card animate-fade-up delay-150" id="section-2">
+      <div class="section-header">
+        <div class="section-icon teal">💧</div>
+        <div>
+          <div class="fw-700">Water Intake</div>
+          <div class="text-muted small">Stay hydrated — target 2.5 L/day</div>
+        </div>
+      </div>
+      <div class="col-md-5">
+        {{ form.water_intake.label(class="form-label fw-600 small") }}
+        {{ form.water_intake(class="form-control log-form-control", min="0", max="20", step="0.1", placeholder="e.g. 2.5") }}
+        <div class="d-flex justify-content-between mt-1">
+          <span class="text-muted" style="font-size:.75rem;">0 L</span>
+          <span class="text-muted" style="font-size:.75rem;">3+ L recommended</span>
+        </div>
+        {% if form.water_intake.errors %}
+          <div class="text-danger small mt-1">{{ form.water_intake.errors[0] }}</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ── Section 4: Exercise ──────────────────────────────── -->
+    <div class="log-section-card animate-fade-up delay-200" id="section-3">
+      <div class="section-header">
+        <div class="section-icon green">🏃</div>
+        <div>
+          <div class="fw-700">Exercise</div>
+          <div class="text-muted small">Track your physical activity today</div>
+        </div>
+      </div>
+      <div class="row g-4">
+        <div class="col-md-4">
+          {{ form.exercise_minutes.label(class="form-label fw-600 small") }}
+          {{ form.exercise_minutes(class="form-control log-form-control", min="0", max="480", placeholder="e.g. 30") }}
+          {% if form.exercise_minutes.errors %}
+            <div class="text-danger small mt-1">{{ form.exercise_minutes.errors[0] }}</div>
+          {% endif %}
+        </div>
+        <div class="col-md-4">
+          {{ form.steps.label(class="form-label fw-600 small") }}
+          {{ form.steps(class="form-control log-form-control", min="0", max="100000", placeholder="e.g. 8000") }}
+          {% if form.steps.errors %}
+            <div class="text-danger small mt-1">{{ form.steps.errors[0] }}</div>
+          {% endif %}
+        </div>
+        <div class="col-md-4">
+          {{ form.workout_type.label(class="form-label fw-600 small") }}
+          {{ form.workout_type(class="form-select log-form-control") }}
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Section 5: Food Habits ───────────────────────────── -->
+    <div class="log-section-card animate-fade-up delay-200" id="section-4">
+      <div class="section-header">
+        <div class="section-icon orange">🥗</div>
+        <div>
+          <div class="fw-700">Food Habits</div>
+          <div class="text-muted small">What did you eat today?</div>
+        </div>
+      </div>
+      <div class="row g-4">
+        <!-- Meals -->
+        <div class="col-12">
+          <div class="fw-600 small mb-3">Meals Completed</div>
+          <div class="d-flex gap-3 flex-wrap">
+            {% for field, icon, label in [(form.breakfast, '🌅', 'Breakfast'), (form.lunch, '☀️', 'Lunch'), (form.dinner, '🌙', 'Dinner')] %}
+            <div class="toggle-group">
+              {{ field(class="btn-check", id=field.id) }}
+              <label for="{{ field.id }}" class="btn btn-outline-success px-4">
+                {{ icon }} {{ label }}
+              </label>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        <!-- Servings -->
+        <div class="col-md-3">
+          {{ form.fruits.label(class="form-label fw-600 small") }}
+          {{ form.fruits(class="form-control log-form-control", min="0", max="20", placeholder="0") }}
+        </div>
+        <div class="col-md-3">
+          {{ form.vegetables.label(class="form-label fw-600 small") }}
+          {{ form.vegetables(class="form-control log-form-control", min="0", max="20", placeholder="0") }}
+        </div>
+        <!-- Bad food toggles -->
+        <div class="col-12">
+          <div class="fw-600 small mb-3">Unhealthy Choices</div>
+          <div class="d-flex gap-3 flex-wrap">
+            {% for field, icon, label in [(form.junk_food, '🍔', 'Junk Food'), (form.sugary_drinks, '🥤', 'Sugary Drinks')] %}
+            <div class="toggle-group">
+              {{ field(class="btn-check", id=field.id) }}
+              <label for="{{ field.id }}" class="btn btn-outline-danger px-4">
+                {{ icon }} {{ label }}
+              </label>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Section 6: Habits ────────────────────────────────── -->
+    <div class="log-section-card animate-fade-up delay-250" id="section-5">
+      <div class="section-header">
+        <div class="section-icon red">🚭</div>
+        <div>
+          <div class="fw-700">Habits</div>
+          <div class="text-muted small">Track harmful habits honestly — this helps improve your risk analysis</div>
+        </div>
+      </div>
+      <div class="d-flex gap-4 flex-wrap">
+        {% for field, icon, label in [(form.smoking, '🚬', 'Smoked Today'), (form.alcohol, '🍺', 'Alcohol Today'), (form.tobacco, '🌿', 'Tobacco Today')] %}
+        <div class="toggle-group">
+          {{ field(class="btn-check", id=field.id) }}
+          <label for="{{ field.id }}" class="btn btn-outline-danger px-4">
+            {{ icon }} {{ label }}
+          </label>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- ── Section 7: Mental Health ─────────────────────────── -->
+    <div class="log-section-card animate-fade-up delay-300" id="section-6">
+      <div class="section-header">
+        <div class="section-icon pink">🧠</div>
+        <div>
+          <div class="fw-700">Mental Health</div>
+          <div class="text-muted small">Your mental state is crucial for overall health</div>
+        </div>
+      </div>
+      <div class="row g-4">
+        <!-- Stress Level -->
+        <div class="col-md-6">
+          <label class="form-label fw-600 small">
+            Stress Level: <span id="stressVal" class="gradient-text fw-700">{{ form.stress_level.data or 5 }}</span>/10
+          </label>
+          {{ form.stress_level(class="form-range range-slider w-100", min="1", max="10", id="stressSlider",
+             oninput="document.getElementById('stressVal').textContent=this.value") }}
+          <div class="d-flex justify-content-between">
+            <span class="text-success" style="font-size:.75rem;">😌 No stress</span>
+            <span class="text-danger" style="font-size:.75rem;">😤 Very stressed</span>
+          </div>
+          {% if form.stress_level.errors %}
+            <div class="text-danger small mt-1">{{ form.stress_level.errors[0] }}</div>
+          {% endif %}
+        </div>
+        <!-- Anxiety -->
+        <div class="col-md-6">
+          {{ form.anxiety_level.label(class="form-label fw-600 small") }}
+          {{ form.anxiety_level(class="form-control log-form-control", min="1", max="10", placeholder="1–10 (optional)") }}
+          {% if form.anxiety_level.errors %}
+            <div class="text-danger small mt-1">{{ form.anxiety_level.errors[0] }}</div>
+          {% endif %}
+        </div>
+        <!-- Mood -->
+        <div class="col-12">
+          <label class="form-label fw-600 small">Today's Mood</label>
+          <div class="d-flex gap-3 flex-wrap align-items-center">
+            {% set moods = [('Happy','😊'),('Energetic','⚡'),('Neutral','😐'),('Tired','😴'),('Sad','😢'),('Anxious','😰'),('Angry','😠')] %}
+            {% for val, emoji in moods %}
+            <div>
+              <input type="radio" class="btn-check" name="mood" id="mood_{{ val }}" value="{{ val }}"
+                     {% if form.mood.data == val %}checked{% endif %}>
+              <label for="mood_{{ val }}" class="btn px-3 py-2"
+                     style="border-radius:14px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.04);font-size:1.5rem;"
+                     title="{{ val }}">{{ emoji }}</label>
+            </div>
+            {% endfor %}
+          </div>
+          {% if form.mood.errors %}
+            <div class="text-danger small mt-1">{{ form.mood.errors[0] }}</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Section 8: Health Vitals ─────────────────────────── -->
+    <div class="log-section-card animate-fade-up delay-350" id="section-7">
+      <div class="section-header">
+        <div class="section-icon blue">❤️</div>
+        <div>
+          <div class="fw-700">Health Vitals</div>
+          <div class="text-muted small">Weight is required; others are optional</div>
+        </div>
+      </div>
+      <div class="row g-4">
+        <div class="col-md-3">
+          {{ form.weight.label(class="form-label fw-600 small") }}
+          {{ form.weight(class="form-control log-form-control", min="20", max="300", step="0.1", placeholder="kg") }}
+          {% if form.weight.errors %}
+            <div class="text-danger small mt-1">{{ form.weight.errors[0] }}</div>
+          {% endif %}
+        </div>
+        <div class="col-md-3">
+          {{ form.blood_pressure.label(class="form-label fw-600 small") }}
+          {{ form.blood_pressure(class="form-control log-form-control", placeholder="e.g. 120/80") }}
+          {% if form.blood_pressure.errors %}
+            <div class="text-danger small mt-1">{{ form.blood_pressure.errors[0] }}</div>
+          {% endif %}
+        </div>
+        <div class="col-md-3">
+          {{ form.blood_sugar.label(class="form-label fw-600 small") }}
+          {{ form.blood_sugar(class="form-control log-form-control", placeholder="mg/dL") }}
+          {% if form.blood_sugar.errors %}
+            <div class="text-danger small mt-1">{{ form.blood_sugar.errors[0] }}</div>
+          {% endif %}
+        </div>
+        <div class="col-md-3">
+          {{ form.heart_rate.label(class="form-label fw-600 small") }}
+          {{ form.heart_rate(class="form-control log-form-control", placeholder="bpm") }}
+          {% if form.heart_rate.errors %}
+            <div class="text-danger small mt-1">{{ form.heart_rate.errors[0] }}</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit Button -->
+    <div class="d-flex justify-content-center mt-4 animate-fade-up delay-400">
+      <button type="submit" class="btn btn-gradient rounded-pill px-5 py-3 fw-700 fs-5" id="submitLogBtn">
+        <i class="bi bi-save me-2"></i>Save Daily Log
+      </button>
+    </div>
+  </form>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ── Highlight active mood button ───────────────────────────────
+document.querySelectorAll('input[name="mood"]').forEach(radio => {
+  const updateMood = () => {
+    document.querySelectorAll('label[for^="mood_"]').forEach(l => l.style.background = 'rgba(255,255,255,.04)');
+    if (radio.checked) {
+      document.querySelector(`label[for="${radio.id}"]`).style.background = 'rgba(108,99,255,.25)';
+      document.querySelector(`label[for="${radio.id}"]`).style.borderColor = '#6C63FF';
+    }
+  };
+  radio.addEventListener('change', updateMood);
+  if (radio.checked) updateMood();
+});
+
+// ── Animate progress bar sections as user scrolls ─────────────
+const steps = document.querySelectorAll('.form-progress-step');
+const sections = document.querySelectorAll('[id^="section-"]');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const idx = parseInt(entry.target.id.split('-')[1]);
+      steps.forEach((s, i) => s.classList.toggle('active', i <= idx));
+    }
+  });
+}, { threshold: 0.3 });
+sections.forEach(s => observer.observe(s));
+
+// ── Submit animation ──────────────────────────────────────────
+document.getElementById('dailyLogForm')?.addEventListener('submit', function() {
+  const btn = document.getElementById('submitLogBtn');
+  if (btn) { btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...'; btn.disabled = true; }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}Weekly Summary{% endblock %}
+
+{% block content %}
+<div class="container-xl py-5">
+
+  <div class="d-flex justify-content-between align-items-center mb-5 flex-wrap gap-3">
+    <div>
+      <h1 class="section-title mb-1">📅 Weekly Summary</h1>
+      <p class="text-muted mb-0">Last 7 days — averages and trend comparison</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('tracker.weekly_report') }}" class="btn btn-gradient rounded-pill px-4 py-2">
+        <i class="bi bi-download me-2"></i>Download PDF
+      </a>
+      <a href="{{ url_for('tracker.progress') }}" class="btn btn-outline-secondary rounded-pill px-3">
+        <i class="bi bi-arrow-left"></i>
+      </a>
+    </div>
+  </div>
+
+  {% set this_w = weekly_stats.this_week %}
+  {% set last_w = weekly_stats.last_week %}
+  {% set changes = weekly_stats.changes %}
+  {% set log_cnt = weekly_stats.log_count %}
+
+  <!-- Log count banner -->
+  <div class="glass-card p-3 mb-4 d-flex align-items-center gap-3">
+    <div style="font-size:2rem;">📊</div>
+    <div>
+      <div class="fw-700">{{ log_cnt }} log{{ 's' if log_cnt != 1 }} this week</div>
+      <div class="text-muted small">{{ 7 - log_cnt }} day{{ 's' if (7 - log_cnt) != 1 }} without a log</div>
+    </div>
+    <div class="ms-auto">
+      <div class="progress" style="width:120px;height:8px;border-radius:99px;background:rgba(255,255,255,.08);">
+        <div class="progress-bar" style="width:{{ (log_cnt / 7 * 100)|int }}%;background:var(--grad-primary);border-radius:99px;"></div>
+      </div>
+      <div class="text-muted text-end small mt-1">{{ (log_cnt / 7 * 100)|int }}% completion</div>
+    </div>
+  </div>
+
+  <!-- Metric cards -->
+  {% if this_w %}
+  <div class="row g-3 mb-5">
+    {% set metrics = [
+      ('😴', 'Sleep Hours',     this_w.sleep_hours,      last_w.sleep_hours if last_w else None,      changes.sleep_hours if changes else 0,      'hrs', '7–9 recommended'),
+      ('💧', 'Water Intake',    this_w.water_intake,     last_w.water_intake if last_w else None,     changes.water_intake if changes else 0,     'L',   '2.5 L target'),
+      ('🏃', 'Exercise',        this_w.exercise_minutes, last_w.exercise_minutes if last_w else None, changes.exercise_minutes if changes else 0, 'min', '30 min/day target'),
+      ('👣', 'Steps',           this_w.steps,            last_w.steps if last_w else None,            changes.steps if changes else 0,            '',    '10,000 target'),
+      ('😰', 'Stress Level',    this_w.stress_level,     last_w.stress_level if last_w else None,     changes.stress_level if changes else 0,     '/10', '≤5 ideal'),
+      ('⚡', 'Health Score',    this_w.health_score,     last_w.health_score if last_w else None,     changes.health_score if changes else 0,     '/100','Target: 70+'),
+      ('🍎', 'Fruit Servings',  this_w.fruits,           last_w.fruits if last_w else None,           changes.fruits if changes else 0,           '',    '3/day ideal'),
+      ('🥦', 'Veg Servings',    this_w.vegetables,       last_w.vegetables if last_w else None,       changes.vegetables if changes else 0,       '',    '3/day ideal'),
+    ] %}
+    {% for emoji, label, curr, prev, change, unit, note in metrics %}
+    <div class="col-6 col-md-3">
+      <div class="glass-card p-3 h-100">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <span style="font-size:1.4rem;">{{ emoji }}</span>
+          {% if change and change != 0 %}
+          <span class="badge rounded-pill" style="font-size:.7rem;background:{% if change > 0 %}rgba(16,185,129,.2);color:#10b981{% else %}rgba(239,68,68,.15);color:#ef4444{% endif %};">
+            {{ '+' if change > 0 else '' }}{{ change }}%
+          </span>
+          {% endif %}
+        </div>
+        <div class="fw-800 gradient-text" style="font-size:1.6rem;">
+          {{ curr if curr else '—' }}{{ unit }}
+        </div>
+        <div class="text-muted small fw-600">{{ label }}</div>
+        {% if prev %}
+        <div class="text-muted mt-1" style="font-size:.72rem;">
+          Prev week: {{ prev }}{{ unit }}
+        </div>
+        {% endif %}
+        <div class="text-muted" style="font-size:.7rem;">{{ note }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Chart -->
+  <div class="glass-card p-4 mb-4">
+    <h5 class="fw-700 mb-3"><i class="bi bi-bar-chart me-2 text-success"></i>7-Day Activity Chart</h5>
+    <canvas id="weeklyChart" height="180" aria-label="Weekly health chart"></canvas>
+  </div>
+
+  <!-- Log table -->
+  {% if logs %}
+  <div class="glass-card p-4">
+    <h5 class="fw-700 mb-3"><i class="bi bi-table me-2"></i>Daily Breakdown</h5>
+    <div class="table-responsive">
+      <table class="table table-borderless align-middle mb-0" style="color:var(--text-primary);font-size:.85rem;">
+        <thead>
+          <tr style="color:var(--text-muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;">
+            <th>Date</th><th>Score</th><th>Sleep</th><th>Water</th><th>Exercise</th><th>Stress</th><th>Mood</th><th>Junk</th><th>Smoking</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in logs %}
+          <tr style="border-bottom:1px solid rgba(255,255,255,.04);">
+            <td class="fw-600">{{ log.log_date.strftime('%a, %d %b') }}</td>
+            <td><span class="fw-700 gradient-text">{{ log.healthy_habits_score }}</span></td>
+            <td>{{ log.sleep_hours }}h</td>
+            <td>{{ log.water_intake }}L</td>
+            <td>{{ log.exercise_minutes }}m</td>
+            <td class="{% if log.stress_level >= 7 %}text-danger{% elif log.stress_level <= 3 %}text-success{% else %}text-warning{% endif %}">{{ log.stress_level }}/10</td>
+            <td>{{ log.mood }}</td>
+            <td>{% if log.junk_food %}<i class="bi bi-x-circle text-danger"></i>{% else %}<i class="bi bi-check-circle text-success"></i>{% endif %}</td>
+            <td>{% if log.smoking %}<i class="bi bi-x-circle text-danger"></i>{% else %}<i class="bi bi-check-circle text-success"></i>{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const cd = {{ chart_data | safe }};
+const ctx = document.getElementById('weeklyChart');
+if (ctx && cd.labels) {
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: cd.labels,
+      datasets: [
+        { label: 'Sleep (hrs)', data: cd.sleep, backgroundColor: 'rgba(108,99,255,.65)', borderRadius: 6, borderSkipped: false },
+        { label: 'Water (L)',   data: cd.water, backgroundColor: 'rgba(78,205,196,.65)',  borderRadius: 6, borderSkipped: false },
+        { label: 'Stress',      data: cd.stress, backgroundColor: 'rgba(239,68,68,.5)',   borderRadius: 6, borderSkipped: false },
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,.05)' }, ticks: { color: '#94a3b8' } },
+        y: { grid: { color: 'rgba(255,255,255,.05)' }, ticks: { color: '#94a3b8' } }
+      }
+    }
+  });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block title %}Monthly Summary{% endblock %}
+
+{% block content %}
+<div class="container-xl py-5">
+
+  <div class="d-flex justify-content-between align-items-center mb-5 flex-wrap gap-3">
+    <div>
+      <h1 class="section-title mb-1">📆 Monthly Summary</h1>
+      <p class="text-muted mb-0">Last 30 days — comprehensive lifestyle overview</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('tracker.monthly_report') }}" class="btn btn-gradient rounded-pill px-4 py-2">
+        <i class="bi bi-download me-2"></i>Download PDF
+      </a>
+      <a href="{{ url_for('tracker.progress') }}" class="btn btn-outline-secondary rounded-pill px-3">
+        <i class="bi bi-arrow-left"></i>
+      </a>
+    </div>
+  </div>
+
+  {% set this_m = monthly_stats.this_month %}
+  {% set last_m = monthly_stats.last_month %}
+  {% set changes = monthly_stats.changes %}
+  {% set log_cnt = monthly_stats.log_count %}
+
+  <!-- Completion banner -->
+  <div class="glass-card p-3 mb-4 d-flex align-items-center gap-3 flex-wrap">
+    <div style="font-size:2rem;">📅</div>
+    <div>
+      <div class="fw-700">{{ log_cnt }} / 30 days logged</div>
+      <div class="text-muted small">{{ ((log_cnt/30)*100)|int }}% monthly consistency</div>
+    </div>
+    <div class="ms-auto" style="min-width:160px;">
+      <div class="progress" style="height:10px;border-radius:99px;background:rgba(255,255,255,.08);">
+        <div class="progress-bar" style="width:{{ ((log_cnt/30)*100)|int }}%;background:var(--grad-primary);border-radius:99px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Monthly metric cards -->
+  {% if this_m %}
+  <div class="row g-3 mb-5">
+    {% set metrics = [
+      ('😴', 'Sleep Hours',    this_m.sleep_hours,      last_m.sleep_hours if last_m else None,      changes.sleep_hours if changes else 0,      'hrs'),
+      ('💧', 'Water Intake',   this_m.water_intake,     last_m.water_intake if last_m else None,     changes.water_intake if changes else 0,     'L'),
+      ('🏃', 'Exercise',       this_m.exercise_minutes, last_m.exercise_minutes if last_m else None, changes.exercise_minutes if changes else 0, 'min'),
+      ('👣', 'Daily Steps',    this_m.steps,            last_m.steps if last_m else None,            changes.steps if changes else 0,            ''),
+      ('😰', 'Stress Level',   this_m.stress_level,     last_m.stress_level if last_m else None,     changes.stress_level if changes else 0,     '/10'),
+      ('⚡', 'Health Score',   this_m.health_score,     last_m.health_score if last_m else None,     changes.health_score if changes else 0,     '/100'),
+      ('🍔', 'Junk Food Days', this_m.junk_food_pct,    last_m.junk_food_pct if last_m else None,    changes.junk_food_pct if changes else 0,    '%'),
+      ('🚬', 'Smoking Days',   this_m.smoking_pct,      last_m.smoking_pct if last_m else None,      changes.smoking_pct if changes else 0,      '%'),
+    ] %}
+    {% for emoji, label, curr, prev, change, unit in metrics %}
+    <div class="col-6 col-md-3">
+      <div class="glass-card p-3 h-100">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <span style="font-size:1.3rem;">{{ emoji }}</span>
+          {% if change and change != 0 %}
+          <span class="badge rounded-pill" style="font-size:.7rem;background:{% if change > 0 %}rgba(16,185,129,.2);color:#10b981{% else %}rgba(239,68,68,.15);color:#ef4444{% endif %};">
+            {{ '+' if change > 0 else '' }}{{ change }}%
+          </span>
+          {% endif %}
+        </div>
+        <div class="fw-800 gradient-text" style="font-size:1.5rem;">{{ curr if curr else '—' }}{{ unit }}</div>
+        <div class="text-muted small fw-600">{{ label }}</div>
+        {% if prev %}
+          <div class="text-muted" style="font-size:.7rem;">Last 30d: {{ prev }}{{ unit }}</div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- 30-day Trend Chart -->
+  <div class="glass-card p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="fw-700 mb-0"><i class="bi bi-graph-up me-2 text-success"></i>30-Day Health Score Trend</h5>
+    </div>
+    <canvas id="monthlyChart" height="200" aria-label="Monthly health trend"></canvas>
+  </div>
+
+  <!-- Multi-metric chart -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-6">
+      <div class="glass-card p-4">
+        <h6 class="fw-700 mb-3">Sleep vs Stress</h6>
+        <canvas id="sleepStressChart" height="200"></canvas>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="glass-card p-4">
+        <h6 class="fw-700 mb-3">Water & Exercise Trend</h6>
+        <canvas id="waterExChart" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent logs -->
+  {% if logs %}
+  <div class="glass-card p-4">
+    <h5 class="fw-700 mb-3"><i class="bi bi-list-check me-2"></i>All Logs This Month</h5>
+    <div class="table-responsive">
+      <table class="table table-borderless align-middle mb-0" style="color:var(--text-primary);font-size:.82rem;">
+        <thead>
+          <tr style="color:var(--text-muted);font-size:.73rem;text-transform:uppercase;letter-spacing:.05em;">
+            <th>Date</th><th>Score</th><th>Sleep</th><th>Water</th><th>Exercise</th><th>Stress</th><th>Weight</th><th>Mood</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in logs %}
+          <tr style="border-bottom:1px solid rgba(255,255,255,.03);">
+            <td class="fw-600">{{ log.log_date.strftime('%d %b') }}</td>
+            <td><span class="fw-700 gradient-text">{{ log.healthy_habits_score }}</span></td>
+            <td>{{ log.sleep_hours }}h <span class="text-muted small">★{{ log.sleep_quality }}</span></td>
+            <td>{{ log.water_intake }}L</td>
+            <td>{{ log.exercise_minutes }}m</td>
+            <td class="{% if log.stress_level >= 7 %}text-danger{% elif log.stress_level <= 3 %}text-success{% else %}text-warning{% endif %}">{{ log.stress_level }}/10</td>
+            <td>{{ log.weight }}kg</td>
+            <td>{{ log.mood }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const cd = {{ chart_data | safe }};
+const opts = {
+  responsive: true,
+  plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 } } } },
+  scales: {
+    x: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#94a3b8', maxTicksLimit: 10, font: { size: 9 } } },
+    y: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#94a3b8', font: { size: 10 } } }
+  }
+};
+
+// Health score line
+const mc = document.getElementById('monthlyChart');
+if (mc && cd.labels) {
+  new Chart(mc, {
+    type: 'line',
+    data: {
+      labels: cd.labels,
+      datasets: [{ label: 'Health Score', data: cd.health_score,
+        borderColor: '#6C63FF', borderWidth: 2.5, backgroundColor: 'rgba(108,99,255,.12)',
+        fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: '#6C63FF' }]
+    },
+    options: { ...opts, scales: { ...opts.scales, y: { ...opts.scales.y, min: 0, max: 100 } } }
+  });
+}
+
+// Sleep vs Stress dual axis
+const ssc = document.getElementById('sleepStressChart');
+if (ssc && cd.labels) {
+  new Chart(ssc, {
+    type: 'line',
+    data: {
+      labels: cd.labels,
+      datasets: [
+        { label: 'Sleep (hrs)', data: cd.sleep,  borderColor: '#6C63FF', backgroundColor: 'rgba(108,99,255,.08)', fill: true, tension: 0.4, pointRadius: 2, yAxisID: 'y' },
+        { label: 'Stress',      data: cd.stress, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,.06)',  fill: true, tension: 0.4, pointRadius: 2, yAxisID: 'y1' },
+      ]
+    },
+    options: {
+      ...opts,
+      scales: {
+        x: opts.scales.x,
+        y:  { ...opts.scales.y, min: 0, max: 12, position: 'left' },
+        y1: { ...opts.scales.y, min: 0, max: 10, position: 'right', grid: { drawOnChartArea: false } }
+      }
+    }
+  });
+}
+
+// Water + Exercise
+const wec = document.getElementById('waterExChart');
+if (wec && cd.labels) {
+  new Chart(wec, {
+    type: 'bar',
+    data: {
+      labels: cd.labels,
+      datasets: [
+        { label: 'Water (L)',   data: cd.water,    backgroundColor: 'rgba(78,205,196,.65)', borderRadius: 4, borderSkipped: false },
+        { label: 'Exercise/10', data: cd.exercise?.map(v => (v/10).toFixed(1)), backgroundColor: 'rgba(16,185,129,.55)', borderRadius: 4, borderSkipped: false },
+      ]
+    },
+    options: opts
+  });
+}
+</script>
+{% endblock %}

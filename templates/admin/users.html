@@ -1,0 +1,42 @@
+{% extends "base.html" %}{% block title %}Admin – Users{% endblock %}
+{% block content %}
+<div class="container-xl py-5">
+  <h1 class="section-title mb-4">👥 User Management</h1>
+  <div class="glass-card p-3">
+    <div class="table-responsive">
+      <table class="table table-borderless align-middle" style="color:var(--text-primary);">
+        <thead><tr style="color:var(--text-muted);font-size:0.78rem;text-transform:uppercase;">
+          <th>ID</th><th>Name</th><th>Email</th><th>BMI</th><th>Status</th><th>Joined</th><th>Actions</th>
+        </tr></thead>
+        <tbody>
+          {% for u in users.items %}
+          <tr>
+            <td class="text-muted small">{{ u.id }}</td>
+            <td class="fw-600 small">{{ u.full_name }}</td>
+            <td class="small text-muted">{{ u.email }}</td>
+            <td class="small">{{ u.bmi or '—' }}</td>
+            <td>
+              {% if u.is_active %}<span class="badge bg-success">Active</span>
+              {% else %}<span class="badge bg-danger">Disabled</span>{% endif %}
+            </td>
+            <td class="small text-muted">{{ u.created_at.strftime('%d %b %Y') }}</td>
+            <td>
+              <form method="POST" action="{{ url_for('admin.toggle_user', user_id=u.id) }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-outline-warning rounded-pill px-2 py-1" style="font-size:0.7rem;">
+                  {{ 'Disable' if u.is_active else 'Enable' }}
+                </button>
+              </form>
+              <form method="POST" action="{{ url_for('admin.delete_user', user_id=u.id) }}" class="d-inline ms-1"
+                    onsubmit="return confirm('Delete this user?')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2 py-1" style="font-size:0.7rem;">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>{% endblock %}

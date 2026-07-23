@@ -1,0 +1,68 @@
+version: "3.9"
+
+services:
+
+  # ── MySQL Database ──────────────────────────────────────────────────
+  db:
+    image: mysql:8.0
+    container_name: healthai_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-rootpassword}
+      MYSQL_DATABASE:      ${DB_NAME:-explainable_ai_health}
+      MYSQL_USER:          ${DB_USER:-healthai_user}
+      MYSQL_PASSWORD:      ${DB_PASSWORD:-healthai_pass}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - healthai_net
+
+  # ── Flask Application ───────────────────────────────────────────────
+  app:
+    build: .
+    container_name: healthai_app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      FLASK_ENV:            production
+      SECRET_KEY:           ${SECRET_KEY:-change-me}
+      DB_USER:              ${DB_USER:-healthai_user}
+      DB_PASSWORD:          ${DB_PASSWORD:-healthai_pass}
+      DB_HOST:              db
+      DB_PORT:              3306
+      DB_NAME:              ${DB_NAME:-explainable_ai_health}
+      MAIL_SERVER:          ${MAIL_SERVER:-smtp.gmail.com}
+      MAIL_PORT:            ${MAIL_PORT:-587}
+      MAIL_USERNAME:        ${MAIL_USERNAME:-}
+      MAIL_PASSWORD:        ${MAIL_PASSWORD:-}
+      MAIL_DEFAULT_SENDER:  ${MAIL_DEFAULT_SENDER:-noreply@healthai.com}
+    volumes:
+      - uploads_data:/app/uploads
+      - datasets_data:/app/datasets
+      - reports_data:/app/reports
+      - models_data:/app/ml/saved_models
+    ports:
+      - "8000:8000"
+    networks:
+      - healthai_net
+
+volumes:
+  mysql_data:
+  uploads_data:
+  datasets_data:
+  reports_data:
+  models_data:
+
+networks:
+  healthai_net:
+    driver: bridge
