@@ -376,6 +376,19 @@ class TrackerService:
             for dim in curr_scores
         }
 
+        # ── XAI SHAP & LIME comparison ─────────────────────────────────────
+        from ml.shap_explainer import ShapExplainer
+        from ml.lime_explainer import LimeExplainer
+
+        baseline_q = Questionnaire.query.filter_by(user_id=user_id, is_complete=True).order_by(Questionnaire.created_at.desc()).first()
+        latest_log = DailyHealthLog.query.filter_by(user_id=user_id).order_by(DailyHealthLog.log_date.desc()).first()
+
+        base_feat = baseline_q.to_feature_dict() if baseline_q else {}
+        curr_feat = self._overlay_log_on_features(base_feat.copy(), latest_log) if latest_log else base_feat
+
+        xai_shap = ShapExplainer.compare_shap_contributions(base_feat, curr_feat)
+        lime_curr = LimeExplainer.explain_instance(curr_feat)
+
         return {
             "baseline":       baseline_risks,
             "current":        {k.replace("_", " ").title(): v for k, v in current_risks.items()},
@@ -387,6 +400,8 @@ class TrackerService:
             "score_diff":     score_diff,
             "baseline_date":  baseline_pred.created_at.strftime("%b %d, %Y"),
             "current_date":   updated["updated_at"],
+            "xai_shap":       xai_shap,
+            "lime_curr":      lime_curr,
         }
 
     # ── AI Health Coach ───────────────────────────────────────────────────

@@ -96,8 +96,8 @@ class PredictionService:
             top_positive_factors = json.dumps(positive_factors),
             top_negative_factors = json.dumps(negative_factors),
             # Model metadata
-            model_version = "stub-1.0",
-            model_name    = "RuleBasedStub",
+            model_version = "v3.0-XAI",
+            model_name    = "XAI-EnsemblePredictor",
         )
         db.session.add(prediction)
         db.session.flush()   # get prediction.id before commit
