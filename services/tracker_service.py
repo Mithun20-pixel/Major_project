@@ -250,8 +250,8 @@ class TrackerService:
 
     def compute_updated_risk(self, user_id: int) -> Optional[dict]:
         """
-        Overlay the latest daily log onto the user's baseline questionnaire
-        and re-run the rule-based disease risk and health score calculations.
+        Overlay the latest daily log onto the user's questionnaire or user profile
+        and re-run the ML disease risk and health score calculations.
 
         Does NOT create a new Prediction row — results are returned as a dict
         for display only.
@@ -261,9 +261,12 @@ class TrackerService:
 
         Returns:
             Dict with keys: disease_risks, health_scores, updated_at.
-            None if the user has no baseline questionnaire or no daily logs.
+            None if the user has neither a questionnaire nor daily health logs.
         """
         from services.prediction_service import PredictionService
+        from models.user import User
+
+        user = User.query.get(user_id)
 
         # Find the most recent completed questionnaire for the user
         baseline_q = (
@@ -272,8 +275,6 @@ class TrackerService:
             .order_by(Questionnaire.created_at.desc())
             .first()
         )
-        if baseline_q is None:
-            return None
 
         # Find the most recent daily log
         latest_log = (
@@ -282,22 +283,53 @@ class TrackerService:
             .order_by(DailyHealthLog.log_date.desc())
             .first()
         )
-        if latest_log is None:
+        if latest_log is None and baseline_q is None:
             return None
 
-        # Build a merged feature dict: baseline questionnaire + daily log overrides
-        features = baseline_q.to_feature_dict()
-        features = self._overlay_log_on_features(features, latest_log)
+        if baseline_q:
+            features = baseline_q.to_feature_dict()
+        else:
+            features = {
+                "age": user.age if user and user.age else 35,
+                "gender": user.gender if user and user.gender else "Male",
+                "height_cm": user.height_cm if user and user.height_cm else 170.0,
+                "weight_kg": (latest_log.weight if latest_log and latest_log.weight else (user.weight_kg if user and user.weight_kg else 70.0)),
+                "smoking_status": "Never",
+                "alcohol_intake": "None",
+                "sleep_hours": 7.0,
+                "screen_time_hours": 6.0,
+                "stress_level": 5,
+                "water_intake_L": 2.0,
+                "fast_food_per_week": 2,
+                "sugar_intake": "Moderate",
+                "fruit_veg_servings": 3,
+                "exercise_frequency": "1-2x per week",
+                "exercise_duration_min": 20,
+                "daily_steps": 5000,
+                "blood_pressure_systolic": 120,
+                "blood_sugar_fasting": 95,
+                "family_diabetes": False,
+                "family_heart_disease": False,
+                "family_stroke": False,
+                "family_hypertension": False,
+            }
+            if features.get("height_cm") and features.get("weight_kg"):
+                h_m = features["height_cm"] / 100.0
+                features["bmi"] = round(features["weight_kg"] / (h_m ** 2), 2)
 
-        # Re-run the rule-based engine
+        if latest_log:
+            features = self._overlay_log_on_features(features, latest_log)
+
         svc = PredictionService(self.app)
         disease_risks  = svc.predict_diseases(features)
         health_scores  = svc.calculate_health_scores(features)
 
+        updated_at = latest_log.log_date.isoformat() if latest_log else date.today().isoformat()
+
         return {
             "disease_risks":  disease_risks,
             "health_scores":  health_scores,
-            "updated_at":     latest_log.log_date.isoformat(),
+            "updated_at":     updated_at,
         }
 
     def get_progress_comparison(self, user_id: int) -> Optional[dict]:
@@ -317,6 +349,11 @@ class TrackerService:
             }
             None if insufficient data.
         """
+        from models.user import User
+        from services.prediction_service import PredictionService
+
+        user = User.query.get(user_id)
+
         # Baseline: the first (oldest) completed prediction
         baseline_pred = (
             Prediction.query
@@ -324,25 +361,66 @@ class TrackerService:
             .order_by(Prediction.created_at.asc())
             .first()
         )
-        if baseline_pred is None:
-            return None
 
         updated = self.compute_updated_risk(user_id)
         if updated is None:
             return None
 
-        baseline_risks = {
-            k: v["probability"]
-            for k, v in baseline_pred.disease_risks.items()
+        key_to_display = {
+            "diabetes": "Diabetes",
+            "heart_disease": "Heart Disease",
+            "stroke": "Stroke",
+            "hypertension": "Hypertension",
+            "obesity": "Obesity",
+            "kidney_disease": "Kidney Disease",
+            "fatty_liver": "Fatty Liver",
+            "depression": "Depression",
+            "sleep_disorder": "Sleep Disorder",
+            "thyroid": "Thyroid Disease"
         }
+
+        if baseline_pred is not None:
+            baseline_risks = {
+                k: v["probability"]
+                for k, v in baseline_pred.disease_risks.items()
+            }
+            base_scores = baseline_pred.health_scores
+            base_date = baseline_pred.created_at.strftime("%b %d, %Y")
+            baseline_q = Questionnaire.query.filter_by(user_id=user_id, is_complete=True).order_by(Questionnaire.created_at.desc()).first()
+            base_feat = baseline_q.to_feature_dict() if baseline_q else {}
+        else:
+            oldest_log = (
+                DailyHealthLog.query
+                .filter_by(user_id=user_id)
+                .order_by(DailyHealthLog.log_date.asc())
+                .first()
+            )
+            base_feat = {
+                "age": user.age if user and user.age else 35,
+                "gender": user.gender if user and user.gender else "Male",
+                "height_cm": user.height_cm if user and user.height_cm else 170.0,
+                "weight_kg": oldest_log.weight if oldest_log and oldest_log.weight else (user.weight_kg if user and user.weight_kg else 70.0),
+                "sleep_hours": oldest_log.sleep_hours if oldest_log else 7.0,
+                "water_intake_L": oldest_log.water_intake if oldest_log else 2.0,
+                "stress_level": oldest_log.stress_level if oldest_log else 5,
+                "exercise_duration_min": oldest_log.exercise_minutes if oldest_log else 20,
+            }
+            if base_feat.get("height_cm") and base_feat.get("weight_kg"):
+                h_m = base_feat["height_cm"] / 100.0
+                base_feat["bmi"] = round(base_feat["weight_kg"] / (h_m ** 2), 2)
+
+            svc = PredictionService(self.app)
+            raw_base_risks = svc.predict_diseases(base_feat)
+            baseline_risks = {key_to_display.get(k, k.replace("_", " ").title()): v for k, v in raw_base_risks.items()}
+            base_scores = svc.calculate_health_scores(base_feat)
+            base_date = oldest_log.log_date.strftime("%b %d, %Y") if oldest_log else "Initial Log"
+
         current_risks = updated["disease_risks"]
 
-        # Compute risk difference (current − baseline)
         diff = {}
         improved = []
         worsened = []
 
-        # Map display disease names to internal keys
         disease_key_map = {
             "Diabetes":       "diabetes",
             "Heart Disease":  "heart_disease",
@@ -366,8 +444,6 @@ class TrackerService:
             elif change > 1:
                 worsened.append(display_name)
 
-        # Health score comparison
-        base_scores = baseline_pred.health_scores
         curr_scores = updated["health_scores"]
         score_diff  = {
             dim: round(
@@ -376,14 +452,10 @@ class TrackerService:
             for dim in curr_scores
         }
 
-        # ── XAI SHAP & LIME comparison ─────────────────────────────────────
         from ml.shap_explainer import ShapExplainer
         from ml.lime_explainer import LimeExplainer
 
-        baseline_q = Questionnaire.query.filter_by(user_id=user_id, is_complete=True).order_by(Questionnaire.created_at.desc()).first()
         latest_log = DailyHealthLog.query.filter_by(user_id=user_id).order_by(DailyHealthLog.log_date.desc()).first()
-
-        base_feat = baseline_q.to_feature_dict() if baseline_q else {}
         curr_feat = self._overlay_log_on_features(base_feat.copy(), latest_log) if latest_log else base_feat
 
         xai_shap = ShapExplainer.compare_shap_contributions(base_feat, curr_feat)
@@ -391,14 +463,14 @@ class TrackerService:
 
         return {
             "baseline":       baseline_risks,
-            "current":        {k.replace("_", " ").title(): v for k, v in current_risks.items()},
+            "current":        {key_to_display.get(k, k.replace("_", " ").title()): v for k, v in current_risks.items()},
             "diff":           diff,
             "improved":       improved,
             "worsened":       worsened,
             "score_baseline": base_scores,
             "score_current":  curr_scores,
             "score_diff":     score_diff,
-            "baseline_date":  baseline_pred.created_at.strftime("%b %d, %Y"),
+            "baseline_date":  base_date,
             "current_date":   updated["updated_at"],
             "xai_shap":       xai_shap,
             "lime_curr":      lime_curr,

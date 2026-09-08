@@ -107,13 +107,16 @@
                   <i class="bi bi-bar-chart-steps me-2 text-primary"></i>Compare Progress
                 </a>
               </li>
-              <li>
-                <a class="dropdown-item py-2" href="{{ url_for('tracker.coach') }}">
-                  <i class="bi bi-stars me-2 text-warning"></i>AI Coach
-                </a>
-              </li>
             </ul>
           </li>
+          {% if current_user.is_authenticated and current_user.is_admin %}
+          <li class="nav-item">
+            <a class="nav-link text-warning fw-600 {% if 'admin' in request.endpoint %}active{% endif %}"
+               href="{{ url_for('admin.dashboard') }}">
+              <i class="bi bi-shield-lock me-1"></i> Admin Panel
+            </a>
+          </li>
+          {% endif %}
           {% endif %}
 
           <li class="nav-item">
@@ -246,7 +249,7 @@
           </div>
           <p class="text-muted small">
             An Explainable AI platform for lifestyle-based disease risk prediction.
-            Powered by SHAP and LIME for transparent, trustworthy insights.
+            Powered by Explainable AI (XAI) for transparent, trustworthy insights.
           </p>
           <div class="d-flex gap-3 mt-3">
             <a href="#" class="social-icon"><i class="bi bi-github"></i></a>
@@ -297,7 +300,7 @@
           © {{ now.year if now is defined else 2026 }} HealthAI Framework. All rights reserved.
         </span>
         <span class="text-muted small">
-          Built with ❤️ using Flask · SHAP · LIME · XGBoost
+          Built with ❤️ using Flask · Explainable AI · scikit-learn
         </span>
       </div>
     </div>

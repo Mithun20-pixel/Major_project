@@ -160,15 +160,15 @@
     </div>
   </div>
 
-  <!-- ── Explainable AI (SHAP / LIME) Feature Impact Shifts ───────────────── -->
+  <!-- ── Explainable AI Feature Impact Shifts ───────────────── -->
   {% if comparison.xai_shap %}
   <div class="glass-card p-4 mb-4 animate-fade-up delay-150">
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h5 class="fw-700 mb-0">
-        <i class="bi bi-cpu me-2 text-warning"></i>Explainable AI (XAI) Lifestyle Feature Attribution
+        <i class="bi bi-cpu me-2 text-warning"></i>Feature Attributions & Sensitivity Analysis
       </h5>
       <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 rounded-pill px-3 py-1" style="font-size:0.7rem;">
-        SHAP & LIME Explanations
+        Explainable AI Insights
       </span>
     </div>
     <p class="text-muted small mb-4">
@@ -197,10 +197,11 @@
     </div>
     {% endif %}
 
-    <!-- LIME Local Linear Decision Rules -->
+    <!-- Local Feature Sensitivity Analysis -->
     {% if comparison.lime_curr and comparison.lime_curr.explanation_rules %}
     <div>
-      <h6 class="fw-700 text-info small mb-3"><i class="bi bi-diagram-3 me-2"></i>LIME Local Linear Decision Rules</h6>
+      <h6 class="fw-700 text-info small mb-1"><i class="bi bi-diagram-3 me-2"></i>Local Feature Sensitivity Analysis</h6>
+      <p class="text-muted small mb-3" style="font-size:0.75rem;">This analysis estimates how sensitive the model's prediction is to small local changes in each input feature.</p>
       <div class="row g-2">
         {% for rule in comparison.lime_curr.explanation_rules %}
         <div class="col-md-6">
@@ -229,11 +230,8 @@
   {% endif %}
 
   <div class="d-flex gap-3 justify-content-center mt-5 flex-wrap">
-    <a href="{{ url_for('tracker.progress') }}" class="btn btn-outline-secondary rounded-pill px-4">
-      <i class="bi bi-arrow-left me-2"></i>Progress
-    </a>
-    <a href="{{ url_for('tracker.coach') }}" class="btn btn-gradient rounded-pill px-4">
-      <i class="bi bi-stars me-2"></i>AI Coach
+    <a href="{{ url_for('tracker.progress') }}" class="btn btn-gradient rounded-pill px-4">
+      <i class="bi bi-arrow-left me-2"></i>Back to Progress
     </a>
   </div>
 </div>

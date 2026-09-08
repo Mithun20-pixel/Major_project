@@ -1,57 +1,140 @@
 {% extends "base.html" %}
 {% block title %}Step 2 – Lifestyle{% endblock %}
 {% block content %}
-<div class="container-xl py-5" style="max-width:720px;">
-  <div class="step-wizard mb-5">
-    {% for i, label in [(1,'Personal'),(2,'Lifestyle'),(3,'Food'),(4,'Medical'),(5,'Family'),(6,'Exercise'),(7,'Mental')] %}
-    <div class="step-item {{ 'active' if step == i else ('done' if step > i else 'inactive') }}">
-      <div class="step-circle">{% if step > i %}<i class="bi bi-check2"></i>{% else %}{{ i }}{% endif %}</div>
-      <div class="step-label">{{ label }}</div>
+<div class="container-xl py-5" style="max-width:740px;">
+
+  <!-- Step progress header -->
+  <div class="mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-1">
+      <span class="small text-muted font-monospace">Step 2 of 7 · Lifestyle Habits</span>
+      <span class="small fw-600 text-success">29% Complete</span>
     </div>
-    {% endfor %}
+    <div class="progress mb-4" style="height:6px;background:var(--surface-overlay);border-radius:50px;">
+      <div class="progress-bar" role="progressbar" style="width: 29%; background:var(--grad-primary); border-radius:50px;" aria-valuenow="2" aria-valuemin="1" aria-valuemax="7"></div>
+    </div>
+
+    <!-- Step wizard pills -->
+    <div class="step-wizard">
+      {% for i, label in [(1,'Personal'),(2,'Lifestyle'),(3,'Food'),(4,'Medical'),(5,'Family'),(6,'Exercise'),(7,'Mental')] %}
+      <div class="step-item {{ 'active' if step == i else ('done' if step > i else 'inactive') }}">
+        <div class="step-circle">{% if step > i %}<i class="bi bi-check2"></i>{% else %}{{ i }}{% endif %}</div>
+        <div class="step-label">{{ label }}</div>
+      </div>
+      {% endfor %}
+    </div>
   </div>
+
   <div class="glass-card p-4 p-md-5">
     <h2 class="fs-4 fw-700 mb-1">Lifestyle Habits</h2>
-    <p class="text-muted small mb-4">Your daily habits have a huge impact on disease risk.</p>
-    <form method="POST" novalidate>
+    <p class="text-muted small mb-4">Your daily routines, sleep, and habits strongly influence core disease risk models.</p>
+
+    <!-- Medical Notice -->
+    <div class="alert alert-warning bg-warning bg-opacity-10 border-warning border-opacity-25 py-2 px-3 small mb-4 d-flex align-items-center gap-2">
+      <i class="bi bi-info-circle text-warning flex-shrink-0"></i>
+      <span class="text-secondary">Informational assessment only. All data remains encrypted and private.</span>
+    </div>
+
+    <form method="POST" novalidate id="step2Form">
       {{ form.hidden_tag() }}
+
       <div class="row g-3 mb-3">
         <div class="col-6">
-          {{ form.smoking_status.label(class="form-label") }}
+          <label class="form-label fw-500" for="q2Smoke">
+            {{ form.smoking_status.label.text }} <span class="text-danger">*</span>
+          </label>
           {{ form.smoking_status(class="form-select" + (" is-invalid" if form.smoking_status.errors else ""), id="q2Smoke") }}
-          {% for e in form.smoking_status.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+          {% for e in form.smoking_status.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
         </div>
         <div class="col-6">
-          {{ form.alcohol_intake.label(class="form-label") }}
+          <label class="form-label fw-500" for="q2Alcohol">
+            {{ form.alcohol_intake.label.text }} <span class="text-danger">*</span>
+          </label>
           {{ form.alcohol_intake(class="form-select" + (" is-invalid" if form.alcohol_intake.errors else ""), id="q2Alcohol") }}
-          {% for e in form.alcohol_intake.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+          {% for e in form.alcohol_intake.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
         </div>
       </div>
+
+      <!-- Conditional Smoker Frequency Field -->
+      <div class="mb-3" id="smokingFrequencyContainer" style="display: none;">
+        <div class="p-3 rounded-3" style="background: rgba(239, 68, 68, 0.06); border: 1px dashed rgba(239, 68, 68, 0.3);">
+          <label class="form-label fw-600 text-danger" for="q2Cigarettes">
+            {{ form.cigarettes_per_day.label.text }} <span class="text-danger">*</span>
+          </label>
+          {{ form.cigarettes_per_day(class="form-control" + (" is-invalid" if form.cigarettes_per_day.errors else ""), id="q2Cigarettes", placeholder="e.g. 5, 10, 20", min="1", max="100", data_min="1", data_max="100", data_label="Times Smoked per Day", data_unit="cigs/day") }}
+          <div class="form-text text-muted small"><i class="bi bi-info-circle me-1"></i>Since you selected Current Smoker, please specify daily frequency.</div>
+          {% for e in form.cigarettes_per_day.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
+      </div>
+
       <div class="row g-3 mb-3">
         <div class="col-6">
-          {{ form.sleep_hours.label(class="form-label") }}
-          {{ form.sleep_hours(class="form-control" + (" is-invalid" if form.sleep_hours.errors else ""), placeholder="7.5", id="q2Sleep") }}
-          {% for e in form.sleep_hours.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+          <label class="form-label fw-500" for="q2Sleep">
+            {{ form.sleep_hours.label.text }} <span class="text-danger">*</span>
+            <span class="badge bg-secondary-subtle text-muted ms-1 small">0–24 hrs</span>
+          </label>
+          {{ form.sleep_hours(class="form-control" + (" is-invalid" if form.sleep_hours.errors else ""), placeholder="e.g. 7.5", id="q2Sleep", min="0", max="24", data_min="0", data_max="24", data_label="Sleep Hours", data_unit="hrs") }}
+          {% for e in form.sleep_hours.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
         </div>
         <div class="col-6">
-          {{ form.screen_time_hours.label(class="form-label") }}
-          {{ form.screen_time_hours(class="form-control", placeholder="4", id="q2Screen") }}
+          <label class="form-label fw-500" for="q2Screen">
+            {{ form.screen_time_hours.label.text }} <span class="badge bg-secondary-subtle text-muted ms-1 small">0–24 hrs</span>
+          </label>
+          {{ form.screen_time_hours(class="form-control" + (" is-invalid" if form.screen_time_hours.errors else ""), placeholder="e.g. 4", id="q2Screen", min="0", max="24", data_min="0", data_max="24", data_label="Screen Time", data_unit="hrs") }}
+          {% for e in form.screen_time_hours.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
         </div>
       </div>
+
       <div class="mb-3">
-        {{ form.stress_level.label(class="form-label") }}
-        {{ form.stress_level(class="form-control" + (" is-invalid" if form.stress_level.errors else ""), placeholder="1-10", id="q2Stress") }}
-        {% for e in form.stress_level.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+        <label class="form-label fw-500" for="q2Stress">
+          {{ form.stress_level.label.text }} <span class="text-danger">*</span>
+          <span class="badge bg-secondary-subtle text-muted ms-1 small">1–10</span>
+        </label>
+        {{ form.stress_level(class="form-control" + (" is-invalid" if form.stress_level.errors else ""), placeholder="1 (Low) to 10 (High)", id="q2Stress", min="1", max="10", data_min="1", data_max="10", data_label="Stress Level", data_unit="/10") }}
+        {% for e in form.stress_level.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
       </div>
+
       <div class="mb-4">
-        {{ form.travel_frequency.label(class="form-label") }}
-        {{ form.travel_frequency(class="form-select", id="q2Travel") }}
+        <label class="form-label fw-500" for="q2Travel">{{ form.travel_frequency.label.text }}</label>
+        {{ form.travel_frequency(class="form-select" + (" is-invalid" if form.travel_frequency.errors else ""), id="q2Travel") }}
+        {% for e in form.travel_frequency.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
       </div>
-      <div class="d-flex justify-content-between">
+
+      <div class="d-flex justify-content-between align-items-center pt-2">
         <a href="{{ url_for('predict.step1') }}" class="btn btn-outline-secondary rounded-pill px-4">← Back</a>
-        {{ form.submit(class="btn btn-gradient rounded-pill px-4", id="q2Submit") }}
+        <button type="submit" class="btn btn-gradient rounded-pill px-4 py-2" id="q2Submit">
+          Next Step <i class="bi bi-arrow-right ms-1"></i>
+        </button>
       </div>
     </form>
   </div>
 </div>
+
+{% include "predict/_boundary_modal.html" %}
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const smokeSelect = document.getElementById("q2Smoke");
+  const freqContainer = document.getElementById("smokingFrequencyContainer");
+  const freqInput = document.getElementById("q2Cigarettes");
+
+  function toggleSmokingFreq() {
+    if (smokeSelect && smokeSelect.value === "Current") {
+      freqContainer.style.display = "block";
+      if (freqInput) freqInput.setAttribute("required", "required");
+    } else {
+      freqContainer.style.display = "none";
+      if (freqInput) {
+        freqInput.removeAttribute("required");
+        freqInput.classList.remove("is-invalid");
+      }
+    }
+  }
+
+  if (smokeSelect) {
+    smokeSelect.addEventListener("change", toggleSmokingFreq);
+    toggleSmokingFreq();
+  }
+});
+</script>
 {% endblock %}
+

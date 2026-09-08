@@ -216,68 +216,6 @@
     </div>
   </div>
 
-  <!-- ── AI Coach Tips Preview ──────────────────────────────── -->
-  {% if coach_tips %}
-  <div class="glass-card p-4 mb-5 animate-fade-up">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h5 class="fw-700 mb-0"><i class="bi bi-stars me-2 text-warning"></i>AI Health Coach</h5>
-      <a href="{{ url_for('tracker.coach') }}" class="text-success small">View all tips →</a>
-    </div>
-    {% for tip in coach_tips %}
-    <div class="tip-card {{ tip.type }}">
-      <i class="bi {{ tip.icon }} tip-icon"></i>
-      <div>
-        <div class="fw-600 small mb-1">{{ tip.category }}</div>
-        <div class="text-muted small">{{ tip.message }}</div>
-      </div>
-    </div>
-    {% endfor %}
-  </div>
-  {% endif %}
-
-  <!-- ── Recent Logs Table ──────────────────────────────────── -->
-  <div class="glass-card p-4 animate-fade-up">
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-      <h5 class="fw-700 mb-0"><i class="bi bi-table me-2 text-success"></i>Recent Logs</h5>
-      <div class="d-flex gap-2">
-        <a href="{{ url_for('tracker.weekly_summary') }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">Weekly</a>
-        <a href="{{ url_for('tracker.monthly_summary') }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">Monthly</a>
-      </div>
-    </div>
-    <div class="table-responsive">
-      <table class="table table-borderless align-middle mb-0" style="color:var(--text-primary);">
-        <thead>
-          <tr style="color:var(--text-muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;">
-            <th>Date</th><th>Score</th><th>Sleep</th><th>Water</th><th>Exercise</th><th>Stress</th><th>Mood</th><th>Weight</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for log in recent_logs[:10] %}
-          <tr style="border-bottom:1px solid rgba(255,255,255,.04);">
-            <td class="small fw-600">{{ log.log_date.strftime('%d %b') }}</td>
-            <td>
-              <span class="fw-700 gradient-text">{{ log.healthy_habits_score }}</span>
-              <span class="text-muted small">/100</span>
-            </td>
-            <td class="small">{{ log.sleep_hours }}h</td>
-            <td class="small">{{ log.water_intake }}L</td>
-            <td class="small">{{ log.exercise_minutes }}m</td>
-            <td>
-              <span class="small {% if log.stress_level >= 7 %}text-danger{% elif log.stress_level <= 3 %}text-success{% else %}text-warning{% endif %}">
-                {{ log.stress_level }}/10
-              </span>
-            </td>
-            <td class="small">{{ log.mood }}</td>
-            <td class="small">{{ log.weight }}kg</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  {% endif %}{# end log_count > 0 #}
-
   <!-- Quick nav links -->
   <div class="d-flex gap-3 justify-content-center mt-5 flex-wrap">
     <a href="{{ url_for('tracker.weekly_summary') }}" class="btn btn-outline-secondary rounded-pill px-4">
@@ -289,10 +227,8 @@
     <a href="{{ url_for('tracker.comparison') }}" class="btn btn-outline-secondary rounded-pill px-4">
       <i class="bi bi-bar-chart-steps me-2"></i>Compare
     </a>
-    <a href="{{ url_for('tracker.coach') }}" class="btn btn-outline-warning rounded-pill px-4">
-      <i class="bi bi-stars me-2"></i>AI Coach
-    </a>
   </div>
+  {% endif %}
 
 </div>
 {% endblock %}

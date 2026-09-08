@@ -1,32 +1,106 @@
-{% extends "base.html" %}{% block title %}Step 7 – Mental Health{% endblock %}
+{% extends "base.html" %}
+{% block title %}Step 7 – Mental Health & Final Details{% endblock %}
 {% block content %}
-<div class="container-xl py-5" style="max-width:720px;">
-  <div class="step-wizard mb-5">{% for i, label in [(1,'Personal'),(2,'Lifestyle'),(3,'Food'),(4,'Medical'),(5,'Family'),(6,'Exercise'),(7,'Mental')] %}<div class="step-item {{ 'active' if step == i else ('done' if step > i else 'inactive') }}"><div class="step-circle">{% if step > i %}<i class="bi bi-check2"></i>{% else %}{{ i }}{% endif %}</div><div class="step-label">{{ label }}</div></div>{% endfor %}</div>
+<div class="container-xl py-5" style="max-width:740px;">
+
+  <!-- Step progress header -->
+  <div class="mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-1">
+      <span class="small text-muted font-monospace">Step 7 of 7 · Mental Health &amp; Final Analysis</span>
+      <span class="small fw-600 text-success">100% Complete</span>
+    </div>
+    <div class="progress mb-4" style="height:6px;background:var(--surface-overlay);border-radius:50px;">
+      <div class="progress-bar" role="progressbar" style="width: 100%; background:var(--grad-primary); border-radius:50px;" aria-valuenow="7" aria-valuemin="1" aria-valuemax="7"></div>
+    </div>
+
+    <!-- Step wizard pills -->
+    <div class="step-wizard">
+      {% for i, label in [(1,'Personal'),(2,'Lifestyle'),(3,'Food'),(4,'Medical'),(5,'Family'),(6,'Exercise'),(7,'Mental')] %}
+      <div class="step-item {{ 'active' if step == i else ('done' if step > i else 'inactive') }}">
+        <div class="step-circle">{% if step > i %}<i class="bi bi-check2"></i>{% else %}{{ i }}{% endif %}</div>
+        <div class="step-label">{{ label }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
   <div class="glass-card p-4 p-md-5">
-    <h2 class="fs-4 fw-700 mb-1">Mental Health & Final Details</h2>
-    <p class="text-muted small mb-4">Last step! Your mental health is just as important as physical health.</p>
-    <form method="POST" novalidate>{{ form.hidden_tag() }}
+    <h2 class="fs-4 fw-700 mb-1">Mental Health &amp; Final Details</h2>
+    <p class="text-muted small mb-4">Final step! Emotional wellbeing and stress support provide holistic context for our AI models.</p>
+
+    <!-- Medical Notice -->
+    <div class="alert alert-warning bg-warning bg-opacity-10 border-warning border-opacity-25 py-2 px-3 small mb-4 d-flex align-items-center gap-2">
+      <i class="bi bi-info-circle text-warning flex-shrink-0"></i>
+      <span class="text-secondary">This assessment provides AI-based health risk insights for informational and educational purposes only. It is not a medical diagnosis.</span>
+    </div>
+
+    <form method="POST" novalidate id="step7Form">
+      {{ form.hidden_tag() }}
+
       <div class="row g-3 mb-4">
         {% for field in [form.depression_symptoms, form.anxiety_symptoms, form.mental_health_support] %}
         <div class="col-12">
-          <div class="form-check p-3 rounded-3" style="background:var(--surface-overlay);border:1px solid var(--surface-border);">
-            {{ field(class="form-check-input", id="q7_" ~ field.name) }}
-            <label class="form-check-label small fw-500" for="{{ 'q7_' ~ field.name }}">{{ field.label.text }}</label>
+          <div class="form-check p-3 rounded-3 h-100 d-flex align-items-center" style="background:var(--surface-overlay);border:1px solid var(--surface-border);transition:all 0.2s ease;">
+            {{ field(class="form-check-input me-3 ms-0", id="q7_" ~ field.name, style="width:1.2rem;height:1.2rem;cursor:pointer;") }}
+            <label class="form-check-label small fw-500 text-light mb-0" for="{{ 'q7_' ~ field.name }}" style="cursor:pointer;user-select:none;">
+              {{ field.label.text }}
+            </label>
           </div>
         </div>
         {% endfor %}
       </div>
+
       <div class="row g-3 mb-4">
-        <div class="col-6">{{ form.meditation_yoga.label(class="form-label") }}{{ form.meditation_yoga(class="form-select", id="q7Meditation") }}</div>
-        <div class="col-6">{{ form.pregnancy_status.label(class="form-label") }}{{ form.pregnancy_status(class="form-select", id="q7Pregnancy") }}</div>
+        <div class="col-6">
+          <label class="form-label fw-500" for="q7Meditation">{{ form.meditation_yoga.label.text }}</label>
+          {{ form.meditation_yoga(class="form-select" + (" is-invalid" if form.meditation_yoga.errors else ""), id="q7Meditation") }}
+          {% for e in form.meditation_yoga.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-6">
+          <label class="form-label fw-500" for="q7Pregnancy">{{ form.pregnancy_status.label.text }}</label>
+          {% if is_female %}
+            {{ form.pregnancy_status(class="form-select" + (" is-invalid" if form.pregnancy_status.errors else ""), id="q7Pregnancy") }}
+            {% for e in form.pregnancy_status.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+          {% else %}
+            <select class="form-select text-muted" id="q7PregnancyDisabled" disabled style="opacity: 0.7; cursor: not-allowed;">
+              <option value="N/A" selected>Not applicable (Female only)</option>
+            </select>
+            <input type="hidden" name="pregnancy_status" value="N/A">
+            <div class="form-text text-muted small mt-1"><i class="bi bi-info-circle me-1"></i>Available for female profiles only.</div>
+          {% endif %}
+        </div>
       </div>
-      <div class="alert alert-success alert-sm py-2 small mb-4">
-        <i class="bi bi-check2-circle me-1"></i> Almost done! Click below to run your AI health analysis.
+
+      <div class="alert alert-success alert-sm py-2 px-3 small mb-4 d-flex align-items-center gap-2" style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);">
+        <i class="bi bi-check2-circle text-success fs-5"></i>
+        <span class="text-success-emphasis">All 7 steps completed! Click below to process your ML health risk prediction.</span>
       </div>
-      <div class="d-flex justify-content-between">
+
+      <div class="d-flex justify-content-between align-items-center pt-2">
         <a href="{{ url_for('predict.step6', qid=qid) }}" class="btn btn-outline-secondary rounded-pill px-4">← Back</a>
-        {{ form.submit(class="btn btn-gradient rounded-pill px-4 py-2", id="q7Submit") }}
+        <button type="submit" class="btn btn-gradient rounded-pill px-5 py-2.5 fw-600" id="q7Submit">
+          <span class="submit-text"><i class="bi bi-rocket-takeoff me-2"></i>Analyze My Health 🚀</span>
+          <span class="submit-spinner d-none">
+            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            Analyzing your health information &amp; generating insights...
+          </span>
+        </button>
       </div>
     </form>
   </div>
-</div>{% endblock %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('step7Form')?.addEventListener('submit', function(e) {
+  const btn = document.getElementById('q7Submit');
+  if (btn && this.checkValidity()) {
+    btn.disabled = true;
+    btn.querySelector('.submit-text')?.classList.add('d-none');
+    btn.querySelector('.submit-spinner')?.classList.remove('d-none');
+  }
+});
+</script>
+{% endblock %}
+

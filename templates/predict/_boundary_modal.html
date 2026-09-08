@@ -1,0 +1,143 @@
+<!-- Boundary Error Modal -->
+<div class="modal fade" id="boundaryErrorModal" tabindex="-1" aria-labelledby="boundaryErrorModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass-card border-danger text-light" style="background: rgba(25, 18, 22, 0.96); backdrop-filter: blur(16px); border: 1px solid rgba(220, 53, 69, 0.4); box-shadow: 0 10px 30px rgba(220, 53, 69, 0.25);">
+      <div class="modal-header border-bottom border-danger-subtle">
+        <h5 class="modal-title d-flex align-items-center gap-2 text-danger fw-700" id="boundaryErrorModalLabel">
+          <i class="bi bi-exclamation-triangle-fill fs-4"></i> Input Boundary Error
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-3 text-light-50">One or more of your health inputs are outside the required boundary limits for accurate analysis:</p>
+        <div id="boundaryErrorList" class="d-flex flex-column gap-2 mb-3">
+          <!-- Populated by JS -->
+        </div>
+        <p class="text-muted small mb-0"><i class="bi bi-info-circle me-1"></i> Please update the input value within the specified boundary so the AI model can analyze your health data accurately.</p>
+      </div>
+      <div class="modal-footer border-top border-danger-subtle">
+        <button type="button" class="btn btn-danger rounded-pill px-4 fw-600" data-bs-dismiss="modal" id="boundaryErrorOkBtn">
+          <i class="bi bi-pencil-square me-1"></i> Fix Input Values
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const form = document.querySelector("form");
+  if (!form) return;
+
+  const modalEl = document.getElementById("boundaryErrorModal");
+  const modal = modalEl ? new bootstrap.Modal(modalEl) : null;
+  const errorList = document.getElementById("boundaryErrorList");
+
+  function showBoundaryErrors(errors, firstInvalidInput) {
+    if (!errorList || !modal) return;
+    errorList.innerHTML = "";
+    errors.forEach(err => {
+      const item = document.createElement("div");
+      item.className = "alert alert-danger py-2 px-3 mb-0 d-flex align-items-center justify-content-between rounded-3 border-danger";
+      item.style.background = "rgba(220, 53, 69, 0.15)";
+      item.innerHTML = `
+        <div>
+          <strong class="text-danger-emphasis">${err.label}:</strong>
+          <span class="badge bg-danger ms-1">${err.value !== '' ? err.value : 'Empty'}</span>
+        </div>
+        <div class="small fw-600 text-light ms-2">
+          Allowed Range: <span class="badge bg-secondary">${err.min} – ${err.max} ${err.unit}</span>
+        </div>
+      `;
+      errorList.appendChild(item);
+    });
+    modal.show();
+    if (firstInvalidInput) {
+      const okBtn = document.getElementById("boundaryErrorOkBtn");
+      if (okBtn) {
+        okBtn.addEventListener("click", function() {
+          setTimeout(() => firstInvalidInput.focus(), 300);
+        }, { once: true });
+      }
+    }
+  }
+
+  // Real-time boundary check on input blur
+  const boundedInputs = form.querySelectorAll("input[data-min]");
+  boundedInputs.forEach(input => {
+    input.addEventListener("blur", function() {
+      const rawVal = input.value.trim();
+      if (rawVal === "") return;
+      const val = parseFloat(rawVal);
+      const min = parseFloat(input.dataset.min);
+      const max = parseFloat(input.dataset.max);
+      const feedbackEl = input.parentElement ? input.parentElement.querySelector(".invalid-feedback") : null;
+
+      if (!isNaN(val) && (val < min || val > max)) {
+        input.classList.add("is-invalid");
+        if (feedbackEl) {
+          feedbackEl.innerText = `${input.dataset.label || 'Value'} must be between ${min} and ${max} ${input.dataset.unit || ''}.`;
+          feedbackEl.style.display = "block";
+        }
+      } else {
+        input.classList.remove("is-invalid");
+        if (feedbackEl && !feedbackEl.dataset.serverError) {
+          feedbackEl.style.display = "";
+        }
+      }
+    });
+  });
+
+  // Client-side validation on form submit
+  form.addEventListener("submit", function(e) {
+    const inputs = form.querySelectorAll("input[data-min]");
+    const errors = [];
+    let firstInvalidInput = null;
+
+    inputs.forEach(input => {
+      const rawVal = input.value.trim();
+      if (rawVal === "") return;
+
+      const val = parseFloat(rawVal);
+      const min = parseFloat(input.dataset.min);
+      const max = parseFloat(input.dataset.max);
+      const label = input.dataset.label || input.name;
+      const unit = input.dataset.unit || "";
+
+      if (!isNaN(val) && (val < min || val > max)) {
+        errors.push({ label, value: rawVal, min, max, unit });
+        input.classList.add("is-invalid");
+        if (!firstInvalidInput) firstInvalidInput = input;
+      }
+    });
+
+    if (errors.length > 0) {
+      e.preventDefault();
+      e.stopPropagation();
+      showBoundaryErrors(errors, firstInvalidInput);
+    }
+  });
+
+  // Show popup if page loaded with server-side validation errors
+  const serverInvalidInputs = form.querySelectorAll(".is-invalid");
+  if (serverInvalidInputs.length > 0) {
+    const serverErrors = [];
+    serverInvalidInputs.forEach(input => {
+      const min = input.dataset.min;
+      const max = input.dataset.max;
+      const label = input.dataset.label || "Input";
+      const unit = input.dataset.unit || "";
+      const val = input.value;
+      const feedbackEl = input.parentElement ? input.parentElement.querySelector(".invalid-feedback") : null;
+      if (feedbackEl) feedbackEl.dataset.serverError = "true";
+
+      if (min && max) {
+        serverErrors.push({ label, value: val || "Out of range", min, max, unit });
+      }
+    });
+    if (serverErrors.length > 0) {
+      showBoundaryErrors(serverErrors, serverInvalidInputs[0]);
+    }
+  }
+});
+</script>

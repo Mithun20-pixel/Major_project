@@ -1,26 +1,108 @@
-{% extends "base.html" %}{% block title %}Step 4 – Medical History{% endblock %}
+{% extends "base.html" %}
+{% block title %}Step 4 – Medical History{% endblock %}
 {% block content %}
-<div class="container-xl py-5" style="max-width:720px;">
-  <div class="step-wizard mb-5">{% for i, label in [(1,'Personal'),(2,'Lifestyle'),(3,'Food'),(4,'Medical'),(5,'Family'),(6,'Exercise'),(7,'Mental')] %}<div class="step-item {{ 'active' if step == i else ('done' if step > i else 'inactive') }}"><div class="step-circle">{% if step > i %}<i class="bi bi-check2"></i>{% else %}{{ i }}{% endif %}</div><div class="step-label">{{ label }}</div></div>{% endfor %}</div>
+<div class="container-xl py-5" style="max-width:740px;">
+
+  <!-- Step progress header -->
+  <div class="mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-1">
+      <span class="small text-muted font-monospace">Step 4 of 7 · Medical History &amp; Vitals</span>
+      <span class="small fw-600 text-success">57% Complete</span>
+    </div>
+    <div class="progress mb-4" style="height:6px;background:var(--surface-overlay);border-radius:50px;">
+      <div class="progress-bar" role="progressbar" style="width: 57%; background:var(--grad-primary); border-radius:50px;" aria-valuenow="4" aria-valuemin="1" aria-valuemax="7"></div>
+    </div>
+
+    <!-- Step wizard pills -->
+    <div class="step-wizard">
+      {% for i, label in [(1,'Personal'),(2,'Lifestyle'),(3,'Food'),(4,'Medical'),(5,'Family'),(6,'Exercise'),(7,'Mental')] %}
+      <div class="step-item {{ 'active' if step == i else ('done' if step > i else 'inactive') }}">
+        <div class="step-circle">{% if step > i %}<i class="bi bi-check2"></i>{% else %}{{ i }}{% endif %}</div>
+        <div class="step-label">{{ label }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
   <div class="glass-card p-4 p-md-5">
-    <h2 class="fs-4 fw-700 mb-1">Medical History</h2>
-    <p class="text-muted small mb-4">Current health conditions and vital measurements.</p>
-    <form method="POST" novalidate>{{ form.hidden_tag() }}
-      <div class="mb-3">{{ form.existing_diseases.label(class="form-label") }}{{ form.existing_diseases(class="form-control", rows="2", placeholder="e.g. Type 2 Diabetes, Asthma — or None", id="q4Diseases") }}</div>
-      <div class="mb-3">{{ form.current_medications.label(class="form-label") }}{{ form.current_medications(class="form-control", rows="2", placeholder="e.g. Metformin — or None", id="q4Meds") }}</div>
-      <div class="row g-3 mb-3">
-        <div class="col-6">{{ form.blood_pressure_systolic.label(class="form-label") }}{{ form.blood_pressure_systolic(class="form-control", placeholder="120", id="q4BpSys") }}</div>
-        <div class="col-6">{{ form.blood_pressure_diastolic.label(class="form-label") }}{{ form.blood_pressure_diastolic(class="form-control", placeholder="80", id="q4BpDia") }}</div>
+    <h2 class="fs-4 fw-700 mb-1">Medical History &amp; Clinical Vitals</h2>
+    <p class="text-muted small mb-4">Clinical measurements and existing health conditions provide critical predictive signals.</p>
+
+    <!-- Medical Notice -->
+    <div class="alert alert-warning bg-warning bg-opacity-10 border-warning border-opacity-25 py-2 px-3 small mb-4 d-flex align-items-center gap-2">
+      <i class="bi bi-info-circle text-warning flex-shrink-0"></i>
+      <span class="text-secondary">If you do not know exact vital numbers, leave optional fields blank to use population defaults.</span>
+    </div>
+
+    <form method="POST" novalidate id="step4Form">
+      {{ form.hidden_tag() }}
+
+      <div class="mb-3">
+        <label class="form-label fw-500" for="q4Diseases">{{ form.existing_diseases.label.text }}</label>
+        {{ form.existing_diseases(class="form-control" + (" is-invalid" if form.existing_diseases.errors else ""), rows="2", placeholder="e.g. Type 2 Diabetes, Asthma — or type None", id="q4Diseases") }}
+        {% for e in form.existing_diseases.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
       </div>
-      <div class="row g-3 mb-3">
-        <div class="col-6">{{ form.blood_sugar_fasting.label(class="form-label") }}{{ form.blood_sugar_fasting(class="form-control", placeholder="90 mg/dL", id="q4Sugar") }}</div>
-        <div class="col-6">{{ form.cholesterol_level.label(class="form-label") }}{{ form.cholesterol_level(class="form-control", placeholder="180 mg/dL", id="q4Chol") }}</div>
+
+      <div class="mb-3">
+        <label class="form-label fw-500" for="q4Meds">{{ form.current_medications.label.text }}</label>
+        {{ form.current_medications(class="form-control" + (" is-invalid" if form.current_medications.errors else ""), rows="2", placeholder="e.g. Metformin, Lisinopril — or type None", id="q4Meds") }}
+        {% for e in form.current_medications.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
       </div>
-      <div class="mb-4">{{ form.vaccination_status.label(class="form-label") }}{{ form.vaccination_status(class="form-select", id="q4Vaccine") }}</div>
-      <div class="d-flex justify-content-between">
+
+      <div class="row g-3 mb-3">
+        <div class="col-6">
+          <label class="form-label fw-500" for="q4BpSys">
+            {{ form.blood_pressure_systolic.label.text }}
+            <span class="badge bg-secondary-subtle text-muted ms-1 small">90–180 mmHg</span>
+          </label>
+          {{ form.blood_pressure_systolic(class="form-control" + (" is-invalid" if form.blood_pressure_systolic.errors else ""), placeholder="e.g. 120", id="q4BpSys", min="90", max="180", data_min="90", data_max="180", data_label="Systolic Blood Pressure", data_unit="mmHg") }}
+          {% for e in form.blood_pressure_systolic.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-6">
+          <label class="form-label fw-500" for="q4BpDia">
+            {{ form.blood_pressure_diastolic.label.text }}
+            <span class="badge bg-secondary-subtle text-muted ms-1 small">70–120 mmHg</span>
+          </label>
+          {{ form.blood_pressure_diastolic(class="form-control" + (" is-invalid" if form.blood_pressure_diastolic.errors else ""), placeholder="e.g. 80", id="q4BpDia", min="70", max="120", data_min="70", data_max="120", data_label="Diastolic Blood Pressure", data_unit="mmHg") }}
+          {% for e in form.blood_pressure_diastolic.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-6">
+          <label class="form-label fw-500" for="q4Sugar">
+            {{ form.blood_sugar_fasting.label.text }}
+            <span class="badge bg-secondary-subtle text-muted ms-1 small">70–130 mg/dL</span>
+          </label>
+          {{ form.blood_sugar_fasting(class="form-control" + (" is-invalid" if form.blood_sugar_fasting.errors else ""), placeholder="e.g. 90", id="q4Sugar", min="70", max="130", data_min="70", data_max="130", data_label="Fasting Blood Sugar", data_unit="mg/dL") }}
+          {% for e in form.blood_sugar_fasting.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-6">
+          <label class="form-label fw-500" for="q4Chol">
+            {{ form.cholesterol_level.label.text }}
+            <span class="badge bg-secondary-subtle text-muted ms-1 small">170–240 mg/dL</span>
+          </label>
+          {{ form.cholesterol_level(class="form-control" + (" is-invalid" if form.cholesterol_level.errors else ""), placeholder="e.g. 180", id="q4Chol", min="170", max="240", data_min="170", data_max="240", data_label="Total Cholesterol", data_unit="mg/dL") }}
+          {% for e in form.cholesterol_level.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label fw-500" for="q4Vaccine">{{ form.vaccination_status.label.text }}</label>
+        {{ form.vaccination_status(class="form-select" + (" is-invalid" if form.vaccination_status.errors else ""), id="q4Vaccine") }}
+        {% for e in form.vaccination_status.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center pt-2">
         <a href="{{ url_for('predict.step3', qid=qid) }}" class="btn btn-outline-secondary rounded-pill px-4">← Back</a>
-        {{ form.submit(class="btn btn-gradient rounded-pill px-4", id="q4Submit") }}
+        <button type="submit" class="btn btn-gradient rounded-pill px-4 py-2" id="q4Submit">
+          Next Step <i class="bi bi-arrow-right ms-1"></i>
+        </button>
       </div>
     </form>
   </div>
-</div>{% endblock %}
+</div>
+
+{% include "predict/_boundary_modal.html" %}
+{% endblock %}
+

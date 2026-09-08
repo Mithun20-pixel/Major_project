@@ -29,15 +29,12 @@ migrations/
 
 # ── Generated runtime files ───────────────────────────────────────────
 uploads/
-datasets/
 reports/
-ml/saved_models/
 
 # ── ML / Jupyter ──────────────────────────────────────────────────────
 *.ipynb
 .ipynb_checkpoints/
 *.pkl
-*.joblib
 
 # ── OS ────────────────────────────────────────────────────────────────
 .DS_Store
@@ -56,3 +53,5 @@ htmlcov/
 
 # ── Docker ────────────────────────────────────────────────────────────
 *.tar
+
+scratch/

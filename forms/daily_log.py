@@ -19,6 +19,7 @@ from wtforms import (
 )
 from wtforms.validators import (
     DataRequired,
+    InputRequired,
     NumberRange,
     Optional,
     ValidationError,
@@ -70,7 +71,7 @@ class DailyHealthLogForm(FlaskForm):
     # ── Section 1: Date ────────────────────────────────────────────────────
     log_date = DateField(
         "Log Date",
-        validators=[DataRequired(message="Please select a date.")],
+        validators=[InputRequired(message="Please select a date.")],
         default=date.today,
         description="One entry per day is allowed.",
     )
@@ -79,9 +80,10 @@ class DailyHealthLogForm(FlaskForm):
     sleep_hours = FloatField(
         "Sleep Hours",
         validators=[
-            DataRequired(message="Sleep hours are required."),
+            InputRequired(message="Sleep hours are required."),
             NumberRange(min=0, max=24, message="Sleep hours must be between 0 and 24."),
         ],
+        default=7.5,
         description="Total hours of sleep last night.",
     )
     sleep_quality = SelectField(
@@ -94,7 +96,8 @@ class DailyHealthLogForm(FlaskForm):
             ("5", "5 – Excellent"),
         ],
         coerce=int,
-        validators=[DataRequired()],
+        default=4,
+        validators=[InputRequired(message="Please select sleep quality.")],
         description="Rate your sleep quality from 1 (worst) to 5 (best).",
     )
 
@@ -102,9 +105,10 @@ class DailyHealthLogForm(FlaskForm):
     water_intake = FloatField(
         "Water Intake (Litres)",
         validators=[
-            DataRequired(message="Water intake is required."),
+            InputRequired(message="Water intake is required."),
             NumberRange(min=0, max=20, message="Water intake must be between 0 and 20 L."),
         ],
+        default=2.5,
         description="Total litres of water consumed today.",
     )
 
@@ -112,16 +116,18 @@ class DailyHealthLogForm(FlaskForm):
     exercise_minutes = IntegerField(
         "Exercise Duration (minutes)",
         validators=[
-            DataRequired(message="Enter 0 if no exercise today."),
+            InputRequired(message="Exercise duration is required (enter 0 if none)."),
             NumberRange(min=0, max=480, message="Exercise duration must be 0–480 minutes."),
         ],
+        default=0,
     )
     steps = IntegerField(
         "Steps Walked",
         validators=[
-            DataRequired(message="Enter 0 if steps are unknown."),
+            InputRequired(message="Steps walked is required (enter 0 if unknown)."),
             NumberRange(min=0, max=100_000, message="Steps must be between 0 and 100,000."),
         ],
+        default=0,
     )
     workout_type = SelectField(
         "Workout Type",
@@ -130,9 +136,9 @@ class DailyHealthLogForm(FlaskForm):
     )
 
     # ── Section 5: Food Habits ─────────────────────────────────────────────
-    breakfast     = BooleanField("Breakfast Completed")
-    lunch         = BooleanField("Lunch Completed")
-    dinner        = BooleanField("Dinner Completed")
+    breakfast     = BooleanField("Breakfast Completed", default=True)
+    lunch         = BooleanField("Lunch Completed", default=True)
+    dinner        = BooleanField("Dinner Completed", default=True)
 
     fruits = IntegerField(
         "Fruits Consumed (servings)",
@@ -162,15 +168,17 @@ class DailyHealthLogForm(FlaskForm):
     stress_level = IntegerField(
         "Stress Level (1–10)",
         validators=[
-            DataRequired(message="Stress level is required."),
+            InputRequired(message="Stress level is required."),
             NumberRange(min=1, max=10, message="Stress level must be between 1 and 10."),
         ],
+        default=5,
         description="1 = No stress, 10 = Extremely stressed.",
     )
     mood = SelectField(
         "Mood",
         choices=MOOD_CHOICES,
         validators=[DataRequired(message="Please select your mood.")],
+        default="Happy",
     )
     anxiety_level = IntegerField(
         "Anxiety Level (1–10, optional)",
@@ -185,7 +193,7 @@ class DailyHealthLogForm(FlaskForm):
     weight = FloatField(
         "Current Weight (kg)",
         validators=[
-            DataRequired(message="Weight is required."),
+            InputRequired(message="Weight is required."),
             NumberRange(min=20, max=300, message="Weight must be between 20 and 300 kg."),
         ],
     )

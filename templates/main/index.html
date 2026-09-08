@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
 {% block title %}Home{% endblock %}
-{% block meta_description %}AI-powered lifestyle disease risk prediction with transparent SHAP & LIME explanations. Know your risk for Diabetes, Heart Disease, Stroke and 7 more conditions.{% endblock %}
+{% block meta_description %}AI-powered lifestyle disease risk prediction with transparent feature attribution & sensitivity analysis. Know your risk for Diabetes, Heart Disease, Stroke and 7 more conditions.{% endblock %}
 {% block main_class %}p-0{% endblock %}
 
 {% block content %}
 
 <!-- ══════════════════════════════════════════════════════════════════════════
-     HERO SECTION
+     1. HERO SECTION
 ══════════════════════════════════════════════════════════════════════════ -->
 <section class="hero-section" id="hero">
 
@@ -17,31 +17,30 @@
   <div class="container-xl position-relative">
     <div class="row align-items-center g-5">
 
-      <!-- Left: Headline -->
+      <!-- Left: Headline & CTAs -->
       <div class="col-lg-6">
         <div class="animate-fade-up">
           <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 mb-4 rounded-pill">
-            <i class="bi bi-stars me-1"></i> Powered by SHAP &amp; LIME
+            <i class="bi bi-cpu me-1"></i> Explainable AI Health Risk Framework
           </span>
 
           <h1 class="display-hero mb-4">
-            Predict Your<br>Health Risks.<br>
-            <span style="font-size:0.6em;background:linear-gradient(135deg,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
+            Predict Health Risks.<br>
+            <span style="font-size:0.65em;background:linear-gradient(135deg,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
               Understand Why.
             </span>
           </h1>
 
-          <p class="text-secondary fs-5 mb-5 animate-fade-up delay-100">
-            Our Explainable AI framework analyses your lifestyle, diet, and medical history
-            to predict risk for <strong>10 chronic diseases</strong> — and shows you
-            <em>exactly</em> which factors drive your risk.
+          <p class="text-secondary fs-5 mb-4 animate-fade-up delay-100">
+            Evaluate your personal risk across <strong>10 major chronic diseases</strong> using machine learning.
+            Understand <em>exactly</em> why predictions are made with transparent <strong>Explainable AI</strong> feature attributions and local sensitivity analysis.
           </p>
 
-          <div class="d-flex flex-wrap gap-3 animate-fade-up delay-200">
-            <a href="{{ url_for('auth.register') }}"
+          <div class="d-flex flex-wrap gap-3 animate-fade-up delay-200 mb-4">
+            <a href="{{ url_for('predict.step1') if current_user.is_authenticated else url_for('auth.register') }}"
                class="btn btn-gradient btn-lg rounded-pill px-4 py-3 animate-pulse"
                id="heroGetStarted">
-              <i class="bi bi-rocket-takeoff me-2"></i> Start My Analysis
+              <i class="bi bi-activity me-2"></i> Start Health Assessment
             </a>
             <a href="#how-it-works"
                class="btn btn-outline-secondary btn-lg rounded-pill px-4 py-3">
@@ -49,39 +48,36 @@
             </a>
           </div>
 
-          <!-- Trust indicators -->
-          <div class="d-flex align-items-center gap-4 mt-5 animate-fade-up delay-300">
-            <div class="text-center">
-              <div class="fw-800 fs-4 gradient-text">10</div>
-              <div class="text-muted small">Diseases</div>
+          <!-- Trust metrics bar -->
+          <div class="d-flex flex-wrap align-items-center gap-3 mt-4 animate-fade-up delay-300">
+            <div class="hero-trust-badge d-flex align-items-center gap-2">
+              <i class="bi bi-check-circle-fill text-success"></i>
+              <span><strong>10</strong> Conditions</span>
             </div>
-            <div class="vr opacity-25"></div>
-            <div class="text-center">
-              <div class="fw-800 fs-4 gradient-text">SHAP</div>
-              <div class="text-muted small">Explainable</div>
+            <div class="hero-trust-badge d-flex align-items-center gap-2">
+              <i class="bi bi-check-circle-fill text-success"></i>
+              <span><strong>Explainable AI</strong> (XAI)</span>
             </div>
-            <div class="vr opacity-25"></div>
-            <div class="text-center">
-              <div class="fw-800 fs-4 gradient-text">6+</div>
-              <div class="text-muted small">ML Models</div>
+            <div class="hero-trust-badge d-flex align-items-center gap-2">
+              <i class="bi bi-check-circle-fill text-success"></i>
+              <span><strong>ML Ensemble</strong> Models</span>
             </div>
-            <div class="vr opacity-25"></div>
-            <div class="text-center">
-              <div class="fw-800 fs-4 gradient-text">PDF</div>
-              <div class="text-muted small">Report</div>
+            <div class="hero-trust-badge d-flex align-items-center gap-2">
+              <i class="bi bi-check-circle-fill text-success"></i>
+              <span><strong>PDF</strong> Reports</span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Right: Floating demo card -->
+      <!-- Right: Interactive Hero Demo Card -->
       <div class="col-lg-6 animate-fade-up delay-300">
         <div class="hero-demo-card glass-card p-4" id="heroDemoCard">
 
           <!-- Disease risk preview -->
           <div class="d-flex justify-content-between align-items-center mb-3">
-            <h6 class="mb-0 fw-700"><i class="bi bi-activity me-2 text-success"></i>Risk Overview</h6>
-            <span class="badge risk-badge risk-medium">Demo</span>
+            <h6 class="mb-0 fw-700"><i class="bi bi-activity me-2 text-success"></i>Sample Risk Assessment</h6>
+            <span class="badge risk-badge risk-medium">Live Preview</span>
           </div>
 
           {% set demo_diseases = [
@@ -96,7 +92,7 @@
           <div class="mb-3">
             <div class="d-flex justify-content-between mb-1">
               <span class="small fw-600">{{ disease }}</span>
-              <span class="risk-badge risk-{{ level }} small py-1">{{ level|capitalize }}</span>
+              <span class="risk-badge risk-{{ level }} small py-1">{{ level|capitalize }} ({{ prob }}%)</span>
             </div>
             <div class="progress risk-progress" style="height:8px;border-radius:50px;background:rgba(255,255,255,0.05);">
               <div class="progress-bar risk-{{ level }}-bar demo-bar"
@@ -117,19 +113,19 @@
             <div class="col-3">
               <div class="p-2 rounded-3" style="background:var(--surface-overlay);">
                 <div style="font-size:1.2rem;">{{ emoji }}</div>
-                <div class="fw-800 gradient-text small">{{ val }}</div>
-                <div class="text-muted" style="font-size:0.6rem;">{{ label }}</div>
+                <div class="fw-800 gradient-text small">{{ val }}/100</div>
+                <div class="text-muted" style="font-size:0.65rem;">{{ label }}</div>
               </div>
             </div>
             {% endfor %}
           </div>
 
           <!-- SHAP tag -->
-          <div class="mt-3 p-2 rounded-3 d-flex align-items-center gap-2"
+          <div class="mt-3 p-2.5 rounded-3 d-flex align-items-center gap-2"
                style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);">
-            <i class="bi bi-graph-up text-success"></i>
+            <i class="bi bi-graph-up text-success fs-5"></i>
             <span class="small text-secondary">
-              SHAP &amp; LIME explanations included with every prediction
+              Transparent <strong>SHAP</strong> &amp; <strong>LIME</strong> feature attribution with every assessment.
             </span>
           </div>
         </div>
@@ -139,39 +135,223 @@
 </section>
 
 <!-- ══════════════════════════════════════════════════════════════════════════
-     DISEASES SECTION
+     2. PROJECT VALUE PROPOSITION
+══════════════════════════════════════════════════════════════════════════ -->
+<section class="py-5" id="value-proposition">
+  <div class="container-xl">
+    <div class="text-center mb-5">
+      <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-1.5 mb-2 rounded-pill small">
+        Platform Value
+      </span>
+      <h2 class="section-title animate-fade-up">Why Use HealthAI?</h2>
+      <hr class="divider-gradient mx-auto" />
+      <p class="section-subtitle mx-auto text-muted animate-fade-up delay-100">
+        Combining machine learning accuracy with explainable AI to empower proactive healthcare decisions.
+      </p>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-6 col-lg-3 animate-fade-up delay-100">
+        <div class="glass-card p-4 h-100 text-center">
+          <div class="feature-icon-wrapper mx-auto mb-3">
+            <i class="bi bi-activity"></i>
+          </div>
+          <h5 class="fw-700 mb-2">Multi-Disease AI</h5>
+          <p class="text-muted small mb-0">
+            Simultaneously predicts risk probabilities for 10 prevalent chronic conditions from your health questionnaire data.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-3 animate-fade-up delay-200">
+        <div class="glass-card p-4 h-100 text-center">
+          <div class="feature-icon-wrapper mx-auto mb-3">
+            <i class="bi bi-diagram-3"></i>
+          </div>
+          <h5 class="fw-700 mb-2">Explainable AI</h5>
+          <p class="text-muted small mb-0">
+            No black-box predictions. SHAP waterfall and LIME plots show exactly which factors drive your risk scores up or down.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-3 animate-fade-up delay-300">
+        <div class="glass-card p-4 h-100 text-center">
+          <div class="feature-icon-wrapper mx-auto mb-3">
+            <i class="bi bi-graph-up-arrow"></i>
+          </div>
+          <h5 class="fw-700 mb-2">Health Progress</h5>
+          <p class="text-muted small mb-0">
+            Track daily lifestyle logs, monitor BMI evolution, and compare historical assessment results over time.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-3 animate-fade-up delay-400">
+        <div class="glass-card p-4 h-100 text-center">
+          <div class="feature-icon-wrapper mx-auto mb-3">
+            <i class="bi bi-file-earmark-medical"></i>
+          </div>
+          <h5 class="fw-700 mb-2">Clinical PDF Reports</h5>
+          <p class="text-muted small mb-0">
+            Generate and download formatted PDF health reports complete with risk gauges and actionable recommendations.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     3. CORE FEATURES SECTION
+══════════════════════════════════════════════════════════════════════════ -->
+<section class="py-6" id="features" style="padding:5rem 0;background:var(--surface-card);">
+  <div class="container-xl">
+    <div class="text-center mb-5">
+      <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-1.5 mb-2 rounded-pill small">
+        Capabilities
+      </span>
+      <h2 class="section-title animate-fade-up">Core Platform Features</h2>
+      <hr class="divider-gradient mx-auto" />
+      <p class="section-subtitle mx-auto text-muted animate-fade-up delay-100">
+        Explore the primary functionalities designed to help you understand and track your health.
+      </p>
+    </div>
+
+    <div class="row g-4 justify-content-center">
+
+      <!-- Feature 1 -->
+      <div class="col-md-6 col-lg-4 animate-fade-up delay-100">
+        <div class="glass-card feature-card p-4 h-100">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="feature-icon-wrapper">
+              <i class="bi bi-cpu"></i>
+            </div>
+            <div>
+              <h5 class="fw-700 mb-0">AI Health Assessment</h5>
+              <span class="badge bg-success bg-opacity-10 text-success small">Machine Learning</span>
+            </div>
+          </div>
+          <p class="text-muted small mb-0">
+            Ensemble machine learning models (XGBoost, LightGBM, Random Forest) analyze lifestyle, diet, activity, and medical parameters to compute accurate disease probabilities.
+          </p>
+        </div>
+      </div>
+
+      <!-- Feature 2 -->
+      <div class="col-md-6 col-lg-4 animate-fade-up delay-200">
+        <div class="glass-card feature-card p-4 h-100">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="feature-icon-wrapper">
+              <i class="bi bi-bar-chart-steps"></i>
+            </div>
+            <div>
+              <h5 class="fw-700 mb-0">Explainable AI Insights</h5>
+              <span class="badge bg-info bg-opacity-10 text-info small">SHAP &amp; LIME</span>
+            </div>
+          </div>
+          <p class="text-muted small mb-0">
+            Transparent breakdown of top contributing factors. See positive and negative SHAP force attributions that explain the exact reasoning behind each risk score.
+          </p>
+        </div>
+      </div>
+
+      <!-- Feature 3 -->
+      <div class="col-md-6 col-lg-4 animate-fade-up delay-300">
+        <div class="glass-card feature-card p-4 h-100">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="feature-icon-wrapper">
+              <i class="bi bi-lightbulb"></i>
+            </div>
+            <div>
+              <h5 class="fw-700 mb-0">Personalized Insights</h5>
+              <span class="badge bg-warning bg-opacity-10 text-warning small">Targeted Guidance</span>
+            </div>
+          </div>
+          <p class="text-muted small mb-0">
+            Receive actionable lifestyle, dietary, and habit recommendations tailored specifically to mitigate your highest identified risk factors.
+          </p>
+        </div>
+      </div>
+
+      <!-- Feature 4 -->
+      <div class="col-md-6 col-lg-4 animate-fade-up delay-400">
+        <div class="glass-card feature-card p-4 h-100">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="feature-icon-wrapper">
+              <i class="bi bi-journal-heart"></i>
+            </div>
+            <div>
+              <h5 class="fw-700 mb-0">Health Progress Tracker</h5>
+              <span class="badge bg-primary bg-opacity-10 text-primary small">Longitudinal Logs</span>
+            </div>
+          </div>
+          <p class="text-muted small mb-0">
+            Log daily metrics (sleep, water, steps, mood), track BMI changes over time, and compare weekly and monthly health score summaries.
+          </p>
+        </div>
+      </div>
+
+      <!-- Feature 5 -->
+      <div class="col-md-6 col-lg-4 animate-fade-up delay-500">
+        <div class="glass-card feature-card p-4 h-100">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="feature-icon-wrapper">
+              <i class="bi bi-shield-check"></i>
+            </div>
+            <div>
+              <h5 class="fw-700 mb-0">Secure User Dashboard</h5>
+              <span class="badge bg-danger bg-opacity-10 text-danger small">Privacy &amp; Reports</span>
+            </div>
+          </div>
+          <p class="text-muted small mb-0">
+            A centralized dashboard to review past assessment history, manage user profile parameters, and download structured PDF health reports anytime.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     4. 10 DISEASES WE PREDICT
 ══════════════════════════════════════════════════════════════════════════ -->
 <section class="py-6" id="diseases" style="padding:5rem 0;">
   <div class="container-xl">
     <div class="text-center mb-5">
-      <h2 class="section-title animate-fade-up">10 Diseases We Predict</h2>
+      <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-1.5 mb-2 rounded-pill small">
+        Scope of Analysis
+      </span>
+      <h2 class="section-title animate-fade-up">10 Chronic Diseases Evaluated</h2>
       <hr class="divider-gradient mx-auto" />
       <p class="section-subtitle mx-auto text-muted animate-fade-up delay-100">
-        Using your lifestyle data, we calculate personalised risk probabilities for
-        the most prevalent chronic conditions.
+        Using your lifestyle and health parameters, our ML models compute individual risk percentages for the following conditions.
       </p>
     </div>
 
     <div class="row g-4">
       {% set diseases = [
-        ('🩸', 'Diabetes',       'Type 2 diabetes risk from BMI, diet, and blood sugar markers.'),
-        ('❤️', 'Heart Disease',  'Cardiovascular risk from lipids, BP, smoking, and stress.'),
-        ('🧠', 'Stroke',         'Cerebrovascular risk from hypertension, lifestyle, and age.'),
-        ('🩺', 'Hypertension',   'Blood pressure risk from salt, stress, weight, and genetics.'),
-        ('⚖️', 'Obesity',        'Weight risk from diet quality, activity, and metabolism.'),
-        ('🫘', 'Kidney Disease',  'Renal risk from diabetes, hypertension, and hydration.'),
-        ('🫀', 'Fatty Liver',    'Hepatic risk from alcohol, sugar intake, and BMI.'),
-        ('🧘', 'Depression',     'Mental health risk from stress, sleep, and social factors.'),
-        ('😴', 'Sleep Disorder', 'Sleep quality risk from screen time, stress, and BMI.'),
-        ('🦋', 'Thyroid Disease','Thyroid risk from gender, genetics, and lifestyle.'),
+        ('🩸', 'Diabetes',       'Type 2 diabetes risk from BMI, diet quality, and blood sugar indicators.'),
+        ('❤️', 'Heart Disease',  'Cardiovascular risk from lipids, blood pressure, smoking, and stress levels.'),
+        ('🧠', 'Stroke',         'Cerebrovascular risk based on hypertension, lifestyle, and age factors.'),
+        ('🩺', 'Hypertension',   'High blood pressure risk from sodium intake, stress, weight, and family history.'),
+        ('⚖️', 'Obesity',        'Metabolic weight risk computed from diet quality, activity, and BMI.'),
+        ('🫘', 'Kidney Disease',  'Renal risk evaluated from diabetes markers, hypertension, and hydration.'),
+        ('🫀', 'Fatty Liver',    'Hepatic steatosis risk from alcohol, sugar intake, and metabolic markers.'),
+        ('🧘', 'Depression',     'Mental wellbeing risk from chronic stress, sleep quality, and social factors.'),
+        ('😴', 'Sleep Disorder', 'Sleep quality risk evaluated from screen time, stress levels, and BMI.'),
+        ('🦋', 'Thyroid Disease','Thyroid imbalance risk based on gender, genetics, and lifestyle indicators.'),
       ] %}
 
       {% for emoji, name, desc in diseases %}
       <div class="col-6 col-md-4 col-lg-2-4 animate-fade-up delay-{{ loop.index * 50 if loop.index * 50 <= 500 else 500 }}">
-        <div class="glass-card p-3 text-center h-100" style="min-height:160px;">
-          <div class="mb-2" style="font-size:2rem;">{{ emoji }}</div>
-          <h6 class="fw-700 mb-1" style="font-size:0.85rem;">{{ name }}</h6>
-          <p class="text-muted mb-0" style="font-size:0.72rem;line-height:1.4;">{{ desc }}</p>
+        <div class="glass-card p-3 text-center h-100 d-flex flex-column justify-content-between" style="min-height:165px;">
+          <div>
+            <div class="mb-2" style="font-size:2rem;">{{ emoji }}</div>
+            <h6 class="fw-700 mb-1" style="font-size:0.875rem;">{{ name }}</h6>
+            <p class="text-muted mb-0" style="font-size:0.75rem;line-height:1.4;">{{ desc }}</p>
+          </div>
         </div>
       </div>
       {% endfor %}
@@ -180,68 +360,76 @@
 </section>
 
 <!-- ══════════════════════════════════════════════════════════════════════════
-     HOW IT WORKS
+     5. HOW IT WORKS SECTION
 ══════════════════════════════════════════════════════════════════════════ -->
-<section class="py-6 position-relative" id="how-it-works" style="padding:5rem 0;">
+<section class="py-6 position-relative" id="how-it-works" style="padding:5rem 0;background:var(--surface-card);">
   <div class="container-xl">
     <div class="text-center mb-5">
+      <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-1.5 mb-2 rounded-pill small">
+        Workflow
+      </span>
       <h2 class="section-title animate-fade-up">How It Works</h2>
       <hr class="divider-gradient mx-auto" />
+      <p class="section-subtitle mx-auto text-muted animate-fade-up delay-100">
+        A seamless 4-step process to transform lifestyle data into transparent health intelligence.
+      </p>
     </div>
 
-    <div class="row g-4 justify-content-center">
-      {% set steps = [
-        ('1', 'bi-clipboard-heart', 'Complete the Questionnaire',
-         'Answer 7 sections covering lifestyle, diet, medical history, and more.'),
-        ('2', 'bi-cpu',             'AI Analyses Your Data',
-         'XGBoost, LightGBM, and Random Forest models predict your disease probabilities.'),
-        ('3', 'bi-graph-up-arrow',  'SHAP & LIME Explanations',
-         'Every prediction is explained using SHAP waterfall and LIME feature importance plots.'),
-        ('4', 'bi-file-medical',    'Download Your Report',
-         'Get a professional PDF health report with charts, scores, and personalised recommendations.'),
-      ] %}
+    <div class="how-it-works-timeline">
+      <div class="row g-4 justify-content-center">
+        {% set steps = [
+          ('1', 'bi-clipboard2-pulse', 'Complete Questionnaire',
+           'Fill out 7 guided sections covering personal details, lifestyle, diet, activity, and medical history.'),
+          ('2', 'bi-cpu-fill',          'AI Multi-Model Processing',
+           'XGBoost, LightGBM, and Random Forest models process your input against trained clinical datasets.'),
+          ('3', 'bi-graph-up-arrow',    'View Risks & XAI Explanations',
+           'Receive probabilistic risk estimates accompanied by interactive SHAP waterfall and LIME impact charts.'),
+          ('4', 'bi-journal-check',     'Track Progress & Get Insights',
+           'Log daily health metrics over time, receive personalized recommendations, and download PDF health reports.'),
+        ] %}
 
-      {% for num, icon, title, desc in steps %}
-      <div class="col-md-6 col-lg-3 animate-fade-up delay-{{ loop.index * 100 }}">
-        <div class="glass-card p-4 h-100 text-center">
-          <div class="step-number-badge mx-auto mb-3"
-               style="width:56px;height:56px;border-radius:50%;background:var(--grad-primary);
-                      display:flex;align-items:center;justify-content:center;
-                      font-family:var(--font-display);font-weight:800;font-size:1.2rem;color:#fff;">
-            {{ num }}
+        {% for num, icon, title, desc in steps %}
+        <div class="col-md-6 col-lg-3 animate-fade-up delay-{{ loop.index * 100 }}">
+          <div class="glass-card step-card p-4 h-100 text-center">
+            <div class="step-number-badge mx-auto mb-3"
+                 style="width:56px;height:56px;border-radius:50%;background:var(--grad-primary);
+                        display:flex;align-items:center;justify-content:center;
+                        font-family:var(--font-display);font-weight:800;font-size:1.25rem;color:#fff;
+                        box-shadow:var(--glow-green);">
+              {{ num }}
+            </div>
+            <i class="bi {{ icon }} fs-2 text-success mb-3 d-block"></i>
+            <h5 class="fw-700 mb-2" style="font-size:1.05rem;">{{ title }}</h5>
+            <p class="text-muted small mb-0">{{ desc }}</p>
           </div>
-          <i class="bi {{ icon }} fs-3 text-success mb-3 d-block"></i>
-          <h5 class="fw-700 mb-2">{{ title }}</h5>
-          <p class="text-muted small mb-0">{{ desc }}</p>
         </div>
+        {% endfor %}
       </div>
-      {% endfor %}
     </div>
   </div>
 </section>
 
 <!-- ══════════════════════════════════════════════════════════════════════════
-     XAI HIGHLIGHT
+     6. EXPLAINABLE AI HIGHLIGHT
 ══════════════════════════════════════════════════════════════════════════ -->
-<section style="padding:5rem 0;background:var(--surface-card);">
+<section class="py-6" id="explainable-ai" style="padding:5rem 0;">
   <div class="container-xl">
     <div class="row align-items-center g-5">
       <div class="col-lg-6 animate-fade-up">
         <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 mb-3 rounded-pill">
-          <i class="bi bi-diagram-3 me-1"></i> Explainable AI
+          <i class="bi bi-diagram-3 me-1"></i> Explainable AI (XAI)
         </span>
         <h2 class="section-title mb-3">Why Does the AI Say <em>That?</em></h2>
         <p class="text-muted mb-4">
-          Traditional AI is a black box. HealthAI uses <strong>SHAP</strong> (SHapley Additive exPlanations)
-          and <strong>LIME</strong> (Local Interpretable Model-agnostic Explanations) to show you
-          exactly which lifestyle factors increase or decrease each risk — in plain English.
+          Traditional healthcare AI acts like an uninterpretable black box. HealthAI integrates <strong>SHAP</strong> (SHapley Additive exPlanations)
+          and <strong>LIME</strong> (Local Interpretable Model-agnostic Explanations) to show you exactly which lifestyle choices increase or decrease your calculated risk.
         </p>
 
         <div class="d-flex flex-column gap-3">
           {% for title, desc, icon in [
-            ('Global Feature Importance', 'See which factors matter most across all predictions.', 'bi-bar-chart-steps'),
-            ('Local Explanations (SHAP Force)', 'Understand why YOUR prediction is high or low.', 'bi-activity'),
-            ('LIME Feature Weights', 'Independent model-agnostic local explanation.', 'bi-diagram-3'),
+            ('Global Feature Importance', 'Identifies which lifestyle factors drive overall model predictions across all patients.', 'bi-bar-chart-steps'),
+            ('Local SHAP Force Attributions', 'Highlights the exact positive (risk-increasing) and negative (risk-reducing) parameters for YOUR personal profile.', 'bi-activity'),
+            ('LIME Model-Agnostic Verification', 'Provides independent local surrogate verification of prediction confidence.', 'bi-shield-check'),
           ] %}
           <div class="d-flex gap-3 align-items-start">
             <div class="rec-icon flex-shrink-0">
@@ -258,8 +446,15 @@
 
       <div class="col-lg-6 animate-fade-up delay-200">
         <div class="glass-card p-4">
-          <h6 class="text-muted mb-3 small fw-600 text-uppercase">SHAP Feature Impact (Demo)</h6>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="text-muted mb-0 small fw-600 text-uppercase">SHAP Feature Impact Visualization</h6>
+            <span class="badge bg-success bg-opacity-10 text-success small">Interactive Demo</span>
+          </div>
           <canvas id="shapDemoChart" height="250" aria-label="SHAP feature importance demo chart"></canvas>
+          <div class="d-flex justify-content-between text-muted small mt-2 px-1">
+            <span><i class="bi bi-circle-fill text-danger me-1"></i> Increases Risk (+)</span>
+            <span><i class="bi bi-circle-fill text-success me-1"></i> Reduces Risk (-)</span>
+          </div>
         </div>
       </div>
     </div>
@@ -267,23 +462,55 @@
 </section>
 
 <!-- ══════════════════════════════════════════════════════════════════════════
-     CTA
+     7. TRUST AND RESPONSIBLE USE (DISCLAIMER)
 ══════════════════════════════════════════════════════════════════════════ -->
-<section style="padding:5rem 0;">
+<section class="py-4" id="trust-disclaimer">
+  <div class="container-xl">
+    <div class="disclaimer-banner p-4">
+      <div class="d-flex align-items-start gap-3">
+        <div class="fs-2 text-warning flex-shrink-0 mt-1">
+          <i class="bi bi-shield-exclamation"></i>
+        </div>
+        <div>
+          <h5 class="fw-700 mb-1 text-warning">Educational &amp; Informational Use Only</h5>
+          <p class="mb-2 text-secondary small" style="line-height:1.5;">
+            This platform provides an AI-based health risk assessment for educational and informational purposes only. It does <strong>not</strong> provide a medical diagnosis and should <strong>not</strong> replace consultation with a qualified healthcare professional.
+          </p>
+          <div class="d-flex flex-wrap gap-2 mt-2">
+            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 small">
+              <i class="bi bi-lock me-1"></i> Data Privacy Encrypted
+            </span>
+            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 small">
+              <i class="bi bi-code-square me-1"></i> Transparent AI Algorithms
+            </span>
+            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 small">
+              <i class="bi bi-journal-medical me-1"></i> Informational Tool
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     8. CALL TO ACTION SECTION
+══════════════════════════════════════════════════════════════════════════ -->
+<section style="padding:4rem 0 5rem;">
   <div class="container-xl text-center">
-    <div class="glass-card p-5 p-md-6 mx-auto" style="max-width:700px;">
+    <div class="glass-card p-5 p-md-6 mx-auto" style="max-width:720px;">
       <div style="font-size:3rem;" class="mb-3">🩺</div>
-      <h2 class="section-title mb-3">Ready to Know Your Health Risks?</h2>
-      <p class="text-muted mb-4">
-        It takes less than 5 minutes. Completely free. No credit card required.
+      <h2 class="section-title mb-3">Ready to Understand Your Health Risks?</h2>
+      <p class="text-muted mb-4 fs-6">
+        Take our multi-factor questionnaire in under 5 minutes to receive your personalized risk breakdown and transparent SHAP &amp; LIME explanations.
       </p>
-      <a href="{{ url_for('auth.register') }}"
+      <a href="{{ url_for('predict.step1') if current_user.is_authenticated else url_for('auth.register') }}"
          class="btn btn-gradient btn-lg rounded-pill px-5 py-3" id="ctaGetStarted">
-        <i class="bi bi-rocket-takeoff me-2"></i> Get My Free Analysis
+        <i class="bi bi-rocket-takeoff me-2"></i> Start Free Assessment
       </a>
       <p class="text-muted small mt-3 mb-0">
         <i class="bi bi-shield-lock me-1"></i>
-        Your data is encrypted and never shared. Medical disclaimer applies.
+        Secure session handling. No medical diagnosis provided.
       </p>
     </div>
   </div>
@@ -304,19 +531,21 @@ window.addEventListener('load', () => {
 
 // ── Floating particles ─────────────────────────────────────────────────────
 const container = document.getElementById('particleContainer');
-for (let i = 0; i < 20; i++) {
-  const p = document.createElement('div');
-  p.className = 'hero-particle';
-  p.style.cssText = `
-    left: ${Math.random() * 100}%;
-    animation-duration: ${6 + Math.random() * 8}s;
-    animation-delay: ${-Math.random() * 10}s;
-    width: ${3 + Math.random() * 5}px;
-    height: ${3 + Math.random() * 5}px;
-    opacity: ${0.2 + Math.random() * 0.4};
-    background: ${Math.random() > 0.5 ? '#10b981' : '#3b82f6'};
-  `;
-  container.appendChild(p);
+if (container) {
+  for (let i = 0; i < 20; i++) {
+    const p = document.createElement('div');
+    p.className = 'hero-particle';
+    p.style.cssText = `
+      left: ${Math.random() * 100}%;
+      animation-duration: ${6 + Math.random() * 8}s;
+      animation-delay: ${-Math.random() * 10}s;
+      width: ${3 + Math.random() * 5}px;
+      height: ${3 + Math.random() * 5}px;
+      opacity: ${0.2 + Math.random() * 0.4};
+      background: ${Math.random() > 0.5 ? '#10b981' : '#3b82f6'};
+    `;
+    container.appendChild(p);
+  }
 }
 
 // ── SHAP demo chart ────────────────────────────────────────────────────────
@@ -330,8 +559,8 @@ if (shapCtx) {
         label: 'SHAP Impact',
         data: [0.32, 0.28, 0.21, -0.15, -0.18, 0.25, 0.14],
         backgroundColor: ctx => ctx.parsed.y >= 0
-          ? 'rgba(239,68,68,0.7)'
-          : 'rgba(16,185,129,0.7)',
+          ? 'rgba(239,68,68,0.75)'
+          : 'rgba(16,185,129,0.75)',
         borderRadius: 6,
         borderSkipped: false,
       }]
@@ -343,7 +572,7 @@ if (shapCtx) {
         legend: { display: false },
         tooltip: {
           callbacks: {
-            label: c => ` SHAP: ${c.parsed.x > 0 ? '+' : ''}${c.parsed.x.toFixed(2)}`
+            label: c => ` SHAP Impact: ${c.parsed.x > 0 ? '+' : ''}${c.parsed.x.toFixed(2)}`
           }
         }
       },

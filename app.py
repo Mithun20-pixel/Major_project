@@ -55,10 +55,63 @@ def create_app(env: str = None) -> Flask:
     # ── Shell context for `flask shell` ───────────────────────────────────
     _register_shell_context(app)
 
+    # ── Seed default admin account ─────────────────────────────────────────
+    _seed_default_admin(app)
+
     return app
 
 
 # ── Private helpers ────────────────────────────────────────────────────────
+
+def _seed_default_admin(app: Flask) -> None:
+    """Ensure database tables exist and default admin user admin@healthai.com is present."""
+    with app.app_context():
+        try:
+            db.create_all()
+
+            # Ensure questionnaires table has cigarettes_per_day column (for existing DBs)
+            try:
+                from sqlalchemy import inspect, text
+                inspector = inspect(db.engine)
+                if "questionnaires" in inspector.get_table_names():
+                    cols = [c["name"] for c in inspector.get_columns("questionnaires")]
+                    if "cigarettes_per_day" not in cols:
+                        db.session.execute(text("ALTER TABLE questionnaires ADD COLUMN cigarettes_per_day INTEGER NULL"))
+                        db.session.commit()
+            except Exception as migration_err:
+                app.logger.warning(f"Schema migration warning: {migration_err}")
+
+            from models.user import User
+            from models.admin import Admin
+
+            admin_email = "admin@healthai.com"
+            admin_user = User.query.filter_by(email=admin_email).first()
+            if not admin_user:
+                admin_user = User(
+                    full_name="System Administrator",
+                    email=admin_email,
+                    role="admin",
+                    is_email_verified=True,
+                    is_active=True,
+                    age=30,
+                    gender="Other",
+                )
+                admin_user.password = "Admin@1234"
+                db.session.add(admin_user)
+                db.session.commit()
+
+            if not Admin.query.filter_by(email=admin_email).first():
+                admin_record = Admin(
+                    full_name="System Administrator",
+                    email=admin_email,
+                    is_active=True,
+                )
+                admin_record.password = "Admin@1234"
+                db.session.add(admin_record)
+                db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            print(f"[AdminSeed] Error seeding admin account: {e}")
 
 def _create_directories(app: Flask) -> None:
     """Create runtime directories if they do not already exist."""

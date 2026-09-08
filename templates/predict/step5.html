@@ -1,25 +1,63 @@
-{% extends "base.html" %}{% block title %}Step 5 – Family History{% endblock %}
+{% extends "base.html" %}
+{% block title %}Step 5 – Family History{% endblock %}
 {% block content %}
-<div class="container-xl py-5" style="max-width:720px;">
-  <div class="step-wizard mb-5">{% for i, label in [(1,'Personal'),(2,'Lifestyle'),(3,'Food'),(4,'Medical'),(5,'Family'),(6,'Exercise'),(7,'Mental')] %}<div class="step-item {{ 'active' if step == i else ('done' if step > i else 'inactive') }}"><div class="step-circle">{% if step > i %}<i class="bi bi-check2"></i>{% else %}{{ i }}{% endif %}</div><div class="step-label">{{ label }}</div></div>{% endfor %}</div>
+<div class="container-xl py-5" style="max-width:740px;">
+
+  <!-- Step progress header -->
+  <div class="mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-1">
+      <span class="small text-muted font-monospace">Step 5 of 7 · Family History</span>
+      <span class="small fw-600 text-success">71% Complete</span>
+    </div>
+    <div class="progress mb-4" style="height:6px;background:var(--surface-overlay);border-radius:50px;">
+      <div class="progress-bar" role="progressbar" style="width: 71%; background:var(--grad-primary); border-radius:50px;" aria-valuenow="5" aria-valuemin="1" aria-valuemax="7"></div>
+    </div>
+
+    <!-- Step wizard pills -->
+    <div class="step-wizard">
+      {% for i, label in [(1,'Personal'),(2,'Lifestyle'),(3,'Food'),(4,'Medical'),(5,'Family'),(6,'Exercise'),(7,'Mental')] %}
+      <div class="step-item {{ 'active' if step == i else ('done' if step > i else 'inactive') }}">
+        <div class="step-circle">{% if step > i %}<i class="bi bi-check2"></i>{% else %}{{ i }}{% endif %}</div>
+        <div class="step-label">{{ label }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
   <div class="glass-card p-4 p-md-5">
     <h2 class="fs-4 fw-700 mb-1">Family Medical History</h2>
-    <p class="text-muted small mb-4">Genetic factors can significantly influence your risk profile.</p>
-    <form method="POST" novalidate>{{ form.hidden_tag() }}
+    <p class="text-muted small mb-4">Genetic predispositions for chronic diseases help our model refine hereditary risk multipliers.</p>
+
+    <!-- Medical Notice -->
+    <div class="alert alert-warning bg-warning bg-opacity-10 border-warning border-opacity-25 py-2 px-3 small mb-4 d-flex align-items-center gap-2">
+      <i class="bi bi-info-circle text-warning flex-shrink-0"></i>
+      <span class="text-secondary">Select any conditions diagnosed in your immediate family (parents, siblings, grandparents).</span>
+    </div>
+
+    <form method="POST" novalidate id="step5Form">
+      {{ form.hidden_tag() }}
+
       <div class="row g-3 mb-4">
         {% for field in [form.family_diabetes, form.family_heart_disease, form.family_stroke, form.family_hypertension, form.family_obesity, form.family_kidney_disease, form.family_cancer, form.family_thyroid, form.family_depression] %}
-        <div class="col-6">
-          <div class="form-check p-3 rounded-3" style="background:var(--surface-overlay);border:1px solid var(--surface-border);">
-            {{ field(class="form-check-input", id="q5_" ~ field.name) }}
-            <label class="form-check-label small fw-500" for="{{ 'q5_' ~ field.name }}">{{ field.label.text }}</label>
+        <div class="col-12 col-md-6">
+          <div class="form-check p-3 rounded-3 h-100 d-flex align-items-center" style="background:var(--surface-overlay);border:1px solid var(--surface-border);transition:all 0.2s ease;">
+            {{ field(class="form-check-input me-3 ms-0", id="q5_" ~ field.name, style="width:1.2rem;height:1.2rem;cursor:pointer;") }}
+            <label class="form-check-label small fw-500 text-light mb-0" for="{{ 'q5_' ~ field.name }}" style="cursor:pointer;user-select:none;">
+              {{ field.label.text }}
+            </label>
           </div>
         </div>
         {% endfor %}
       </div>
-      <div class="d-flex justify-content-between">
+
+      <div class="d-flex justify-content-between align-items-center pt-2">
         <a href="{{ url_for('predict.step4', qid=qid) }}" class="btn btn-outline-secondary rounded-pill px-4">← Back</a>
-        {{ form.submit(class="btn btn-gradient rounded-pill px-4", id="q5Submit") }}
+        <button type="submit" class="btn btn-gradient rounded-pill px-4 py-2" id="q5Submit">
+          Next Step <i class="bi bi-arrow-right ms-1"></i>
+        </button>
       </div>
     </form>
   </div>
-</div>{% endblock %}
+</div>
+{% endblock %}
+

@@ -10,7 +10,7 @@ from wtforms import (
     StringField, IntegerField, FloatField,
     SelectField, BooleanField, TextAreaField, SubmitField
 )
-from wtforms.validators import DataRequired, NumberRange, Optional, Length
+from wtforms.validators import DataRequired, NumberRange, Optional, Length, ValidationError
 
 
 # ── Step 1: Personal Information ───────────────────────────────────────────
@@ -21,30 +21,39 @@ class PersonalInfoForm(FlaskForm):
     age = IntegerField(
         "Age (years)",
         validators=[
-            DataRequired(),
-            NumberRange(min=1, max=120, message="Age must be 1–120.")
+            DataRequired(message="Please enter your age."),
+            NumberRange(min=5, max=100, message="Age must be between 5 and 100 years.")
         ]
     )
     gender = SelectField(
         "Gender",
-        choices=[("", "Select"), ("Male", "Male"), ("Female", "Female"), ("Other", "Other")],
-        validators=[DataRequired()]
+        choices=[("", "Select Gender"), ("Male", "Male"), ("Female", "Female"), ("Other", "Other")],
+        validators=[DataRequired(message="Please select your gender.")]
     )
     height_cm = FloatField(
         "Height (cm)",
-        validators=[Optional(), NumberRange(min=50, max=300)]
+        validators=[
+            Optional(),
+            NumberRange(min=50, max=250, message="Height must be between 50 and 250 cm.")
+        ]
     )
     weight_kg = FloatField(
         "Weight (kg)",
-        validators=[Optional(), NumberRange(min=1, max=500)]
+        validators=[
+            Optional(),
+            NumberRange(min=10, max=120, message="Weight must be between 10 and 120 kg.")
+        ]
     )
     occupation = StringField(
         "Occupation",
-        validators=[Optional(), Length(max=100)]
+        validators=[Optional(), Length(max=100, message="Occupation cannot exceed 100 characters.")]
     )
     working_hours_per_day = FloatField(
         "Working Hours per Day",
-        validators=[Optional(), NumberRange(min=0, max=24)]
+        validators=[
+            Optional(),
+            NumberRange(min=0, max=24, message="Working hours must be between 0 and 24 hours.")
+        ]
     )
     submit = SubmitField("Next →")
 
@@ -57,41 +66,67 @@ class LifestyleForm(FlaskForm):
     smoking_status = SelectField(
         "Smoking Status",
         choices=[
-            ("", "Select"), ("Never", "Never"),
+            ("", "Select Smoking Status"), ("Never", "Never"),
             ("Former", "Former Smoker"), ("Current", "Current Smoker")
         ],
-        validators=[DataRequired()]
+        validators=[DataRequired(message="Please select your smoking status.")]
     )
+    cigarettes_per_day = IntegerField(
+        "Times Smoked per Day",
+        validators=[
+            Optional(),
+            NumberRange(min=1, max=100, message="Please enter a valid number of times smoked per day (1–100).")
+        ]
+    )
+
+    def validate_smoking_status(self, field):
+        if field.data == "Current":
+            cigs = self.cigarettes_per_day.data
+            if cigs is None or cigs < 1:
+                msg = "As a current smoker, please enter the number of times you smoke in a day."
+                self.cigarettes_per_day.errors = list(self.cigarettes_per_day.errors) + [msg]
+                raise ValidationError(msg)
+
     alcohol_intake = SelectField(
         "Alcohol Intake",
         choices=[
-            ("", "Select"), ("None", "None"),
+            ("", "Select Alcohol Intake"), ("None", "None"),
             ("Occasional", "Occasional (1-2/week)"),
             ("Moderate", "Moderate (3-5/week)"),
             ("Heavy", "Heavy (Daily)")
         ],
-        validators=[DataRequired()]
+        validators=[DataRequired(message="Please select your alcohol intake level.")]
     )
     sleep_hours = FloatField(
         "Average Sleep Hours per Night",
-        validators=[DataRequired(), NumberRange(min=0, max=24)]
+        validators=[
+            DataRequired(message="Please enter your average sleep hours."),
+            NumberRange(min=0, max=24, message="Sleep hours must be between 0 and 24 hours.")
+        ]
     )
     screen_time_hours = FloatField(
         "Daily Screen Time (hours)",
-        validators=[Optional(), NumberRange(min=0, max=24)]
+        validators=[
+            Optional(),
+            NumberRange(min=0, max=24, message="Screen time must be between 0 and 24 hours.")
+        ]
     )
     stress_level = IntegerField(
         "Stress Level (1 = Low, 10 = High)",
-        validators=[DataRequired(), NumberRange(min=1, max=10)]
+        validators=[
+            DataRequired(message="Please rate your stress level from 1 to 10."),
+            NumberRange(min=1, max=10, message="Stress level must be between 1 and 10.")
+        ]
     )
     travel_frequency = SelectField(
         "Travel Frequency",
         choices=[
-            ("", "Select"), ("Rarely", "Rarely"),
+            ("", "Select Travel Frequency"), ("Rarely", "Rarely"),
             ("Weekly", "Weekly"), ("Daily", "Daily")
         ],
         validators=[Optional()]
     )
+
     submit = SubmitField("Next →")
 
 
@@ -103,33 +138,45 @@ class FoodHabitsForm(FlaskForm):
     diet_type = SelectField(
         "Diet Type",
         choices=[
-            ("", "Select"), ("Vegetarian", "Vegetarian"),
+            ("", "Select Diet Type"), ("Vegetarian", "Vegetarian"),
             ("Non-Vegetarian", "Non-Vegetarian"),
             ("Vegan", "Vegan"), ("Pescatarian", "Pescatarian"),
             ("Keto", "Keto"), ("Mixed", "Mixed")
         ],
-        validators=[DataRequired()]
+        validators=[DataRequired(message="Please select your primary diet type.")]
     )
     meals_per_day = IntegerField(
         "Number of Meals per Day",
-        validators=[DataRequired(), NumberRange(min=1, max=10)]
+        validators=[
+            DataRequired(message="Please enter the number of meals per day."),
+            NumberRange(min=1, max=10, message="Meals per day must be between 1 and 10.")
+        ]
     )
     water_intake_L = FloatField(
         "Daily Water Intake (litres)",
-        validators=[DataRequired(), NumberRange(min=0, max=20)]
+        validators=[
+            DataRequired(message="Please enter your daily water intake."),
+            NumberRange(min=0, max=20, message="Water intake must be between 0 and 20 litres.")
+        ]
     )
     fast_food_per_week = IntegerField(
         "Fast Food Meals per Week",
-        validators=[DataRequired(), NumberRange(min=0, max=21)]
+        validators=[
+            DataRequired(message="Please enter fast food meals per week."),
+            NumberRange(min=0, max=21, message="Fast food meals per week must be between 0 and 21.")
+        ]
     )
     sugar_intake = SelectField(
         "Daily Sugar Intake Level",
-        choices=[("", "Select"), ("Low", "Low"), ("Moderate", "Moderate"), ("High", "High")],
-        validators=[DataRequired()]
+        choices=[("", "Select Sugar Intake"), ("Low", "Low"), ("Moderate", "Moderate"), ("High", "High")],
+        validators=[DataRequired(message="Please select your daily sugar intake level.")]
     )
     fruit_veg_servings = IntegerField(
         "Fruit & Vegetable Servings per Day",
-        validators=[DataRequired(), NumberRange(min=0, max=20)]
+        validators=[
+            DataRequired(message="Please enter fruit and vegetable servings per day."),
+            NumberRange(min=0, max=20, message="Servings must be between 0 and 20 per day.")
+        ]
     )
     submit = SubmitField("Next →")
 
@@ -141,32 +188,44 @@ class MedicalHistoryForm(FlaskForm):
 
     existing_diseases = TextAreaField(
         "Existing Diseases (comma-separated, or 'None')",
-        validators=[Optional(), Length(max=500)]
+        validators=[Optional(), Length(max=500, message="Diseases description cannot exceed 500 characters.")]
     )
     current_medications = TextAreaField(
         "Current Medications (comma-separated, or 'None')",
-        validators=[Optional(), Length(max=500)]
+        validators=[Optional(), Length(max=500, message="Medications description cannot exceed 500 characters.")]
     )
     blood_pressure_systolic = IntegerField(
         "Blood Pressure – Systolic (mmHg)",
-        validators=[Optional(), NumberRange(min=60, max=300)]
+        validators=[
+            Optional(),
+            NumberRange(min=90, max=180, message="Systolic Blood Pressure must be between 90 and 180 mmHg.")
+        ]
     )
     blood_pressure_diastolic = IntegerField(
         "Blood Pressure – Diastolic (mmHg)",
-        validators=[Optional(), NumberRange(min=40, max=200)]
+        validators=[
+            Optional(),
+            NumberRange(min=70, max=120, message="Diastolic Blood Pressure must be between 70 and 120 mmHg.")
+        ]
     )
     blood_sugar_fasting = FloatField(
         "Fasting Blood Sugar (mg/dL)",
-        validators=[Optional(), NumberRange(min=50, max=600)]
+        validators=[
+            Optional(),
+            NumberRange(min=70, max=130, message="Fasting Blood Sugar must be between 70 and 130 mg/dL.")
+        ]
     )
     cholesterol_level = FloatField(
         "Total Cholesterol (mg/dL)",
-        validators=[Optional(), NumberRange(min=50, max=600)]
+        validators=[
+            Optional(),
+            NumberRange(min=170, max=240, message="Total Cholesterol must be between 170 and 240 mg/dL.")
+        ]
     )
     vaccination_status = SelectField(
         "Vaccination Status",
         choices=[
-            ("", "Select"), ("Up to date", "Up to date"),
+            ("", "Select Vaccination Status"), ("Up to date", "Up to date"),
             ("Partially vaccinated", "Partially vaccinated"),
             ("Not vaccinated", "Not vaccinated"),
             ("Unknown", "Unknown")
@@ -201,28 +260,37 @@ class ExerciseForm(FlaskForm):
     exercise_frequency = SelectField(
         "Exercise Frequency",
         choices=[
-            ("", "Select"), ("Never", "Never"),
+            ("", "Select Exercise Frequency"), ("Never", "Never"),
             ("1-2x per week", "1-2x per week"),
             ("3-4x per week", "3-4x per week"),
             ("5+ times per week", "5+ times per week")
         ],
-        validators=[DataRequired()]
+        validators=[DataRequired(message="Please select your exercise frequency.")]
     )
     exercise_type = StringField(
         "Primary Exercise Type (e.g. Walking, Gym, Yoga)",
-        validators=[Optional(), Length(max=100)]
+        validators=[Optional(), Length(max=100, message="Exercise type cannot exceed 100 characters.")]
     )
     exercise_duration_min = IntegerField(
         "Exercise Duration per Session (minutes)",
-        validators=[Optional(), NumberRange(min=0, max=480)]
+        validators=[
+            Optional(),
+            NumberRange(min=0, max=480, message="Exercise duration must be between 0 and 480 minutes.")
+        ]
     )
     heart_rate_resting = IntegerField(
         "Resting Heart Rate (bpm)",
-        validators=[Optional(), NumberRange(min=30, max=200)]
+        validators=[
+            Optional(),
+            NumberRange(min=60, max=100, message="Resting Heart Rate must be between 60 and 100 bpm.")
+        ]
     )
     daily_steps = IntegerField(
         "Average Daily Steps",
-        validators=[Optional(), NumberRange(min=0, max=100000)]
+        validators=[
+            Optional(),
+            NumberRange(min=0, max=100000, message="Daily steps must be between 0 and 100,000.")
+        ]
     )
     submit = SubmitField("Next →")
 
@@ -238,7 +306,7 @@ class MentalHealthForm(FlaskForm):
     meditation_yoga = SelectField(
         "Meditation / Yoga Practice",
         choices=[
-            ("", "Select"), ("Never", "Never"),
+            ("", "Select Practice Frequency"), ("Never", "Never"),
             ("Sometimes", "Sometimes"),
             ("Regular", "Regular (3+ times/week)")
         ],
@@ -253,4 +321,5 @@ class MentalHealthForm(FlaskForm):
         ],
         validators=[Optional()]
     )
-    submit = SubmitField("Submit & Get My Results 🚀")
+    submit = SubmitField("Analyze My Health 🚀")
+

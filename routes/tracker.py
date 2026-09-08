@@ -76,10 +76,17 @@ def log_form():
         )
 
     form = DailyHealthLogForm()
+    if request.method == "GET" and current_user.weight_kg and not form.weight.data:
+        form.weight.data = current_user.weight_kg
 
     if form.validate_on_submit():
         try:
             log = service.save_log(current_user.id, form)
+
+            # Log activity
+            from utils.activity_tracker import log_user_activity
+            log_user_activity(current_user, "Created Daily Health Log", f"Saved daily log for {log.log_date.strftime('%Y-%m-%d')} (Score: {log.healthy_habits_score}/100)")
+
             flash(
                 f"✅ Daily health log for {log.log_date.strftime('%B %d, %Y')} saved! "
                 "Your progress has been updated.",
@@ -89,6 +96,11 @@ def log_form():
 
         except ValueError as exc:
             flash(str(exc), "warning")
+    elif request.method == "POST":
+        for field_name, errors in form.errors.items():
+            field_label = getattr(form, field_name).label.text if hasattr(form, field_name) else field_name
+            for err in errors:
+                flash(f"⚠️ {field_label}: {err}", "danger")
 
     return render_template(
         "tracker/log_form.html",
@@ -121,7 +133,6 @@ def progress():
     monthly_stats  = service.get_monthly_stats(current_user.id)
     updated_risk   = service.compute_updated_risk(current_user.id)
     streak         = service.get_log_streak(current_user.id)
-    coach_tips     = service.get_health_coach_tips(current_user.id)[:3]
     chart_data     = service.get_chart_data(current_user.id, days=30)
     today_log      = service.get_today_log(current_user.id)
 
@@ -132,7 +143,6 @@ def progress():
         monthly_stats = monthly_stats,
         updated_risk  = updated_risk,
         streak        = streak,
-        coach_tips    = coach_tips,
         chart_data    = json.dumps(chart_data),
         today_log     = today_log,
         log_count     = len(recent_logs),
@@ -207,30 +217,6 @@ def comparison():
     )
 
 
-# ── AI Health Coach ────────────────────────────────────────────────────────
-
-@tracker_bp.route("/coach")
-@login_required
-def coach():
-    """
-    AI Health Coach page.
-
-    Displays personalised dynamic recommendations derived from the
-    last 7 days of health logs.
-    """
-    service    = _get_service()
-    tips       = service.get_health_coach_tips(current_user.id)
-    weekly     = service.get_weekly_stats(current_user.id)
-    comparison = service.get_progress_comparison(current_user.id)
-
-    return render_template(
-        "tracker/coach.html",
-        tips       = tips,
-        weekly     = weekly,
-        comparison = comparison,
-    )
-
-
 # ── JSON Chart Data Endpoint ───────────────────────────────────────────────
 
 @tracker_bp.route("/api/chart-data")
@@ -263,13 +249,11 @@ def weekly_report():
     The report includes:
     - Lifestyle summary (7-day averages)
     - Disease risk comparison table
-    - Personalised recommendations
     - Medical disclaimer
     """
     service       = _get_service()
     weekly_stats  = service.get_weekly_stats(current_user.id)
     logs          = service.get_logs(current_user.id, days=7)
-    tips          = service.get_health_coach_tips(current_user.id)
     comparison    = service.get_progress_comparison(current_user.id)
 
     pdf_bytes = _generate_pdf_report(
@@ -277,7 +261,6 @@ def weekly_report():
         user         = current_user,
         stats        = weekly_stats,
         logs         = logs,
-        tips         = tips,
         comparison   = comparison,
     )
 
@@ -301,14 +284,12 @@ def monthly_report():
     The report includes:
     - 30-day lifestyle averages
     - Full disease risk comparison table
-    - AI coach recommendations
     - Progress analysis
     - Medical disclaimer
     """
     service       = _get_service()
     monthly_stats = service.get_monthly_stats(current_user.id)
     logs          = service.get_logs(current_user.id, days=30)
-    tips          = service.get_health_coach_tips(current_user.id)
     comparison    = service.get_progress_comparison(current_user.id)
 
     pdf_bytes = _generate_pdf_report(
@@ -316,7 +297,6 @@ def monthly_report():
         user         = current_user,
         stats        = monthly_stats,
         logs         = logs,
-        tips         = tips,
         comparison   = comparison,
     )
 
@@ -336,7 +316,6 @@ def _generate_pdf_report(
     user,
     stats: dict,
     logs: list,
-    tips: list,
     comparison,
 ) -> bytes:
     """
@@ -493,15 +472,6 @@ def _generate_pdf_report(
                 ("FONTSIZE",    (0, 0), (-1, -1), 9),
             ]))
             story.append(rtbl)
-
-    story.append(Spacer(1, 0.5 * cm))
-
-    # ── AI Coach Recommendations ───────────────────────────────────────────
-    if tips:
-        story.append(Paragraph("AI Health Coach Recommendations", heading2))
-        for tip in tips:
-            story.append(Paragraph(f"• {tip['message']}", normal))
-            story.append(Spacer(1, 0.2 * cm))
 
     story.append(Spacer(1, 0.5 * cm))
 

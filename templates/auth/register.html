@@ -1,86 +1,221 @@
 {% extends "base.html" %}
 {% block title %}Create Account{% endblock %}
 {% block content %}
-<div class="container-xl" style="padding:6rem 0 4rem;">
+<div class="container-xl" style="padding:5rem 0 4rem;">
   <div class="row justify-content-center">
-    <div class="col-md-7 col-lg-6">
+    <div class="col-md-8 col-lg-6">
       <div class="glass-card p-4 p-md-5">
         <div class="text-center mb-4">
-          <span style="font-size:2.5rem;">🩺</span>
-          <h1 class="fs-3 fw-800 mt-2">Create Your Account</h1>
-          <p class="text-muted small">Start your personalised health risk analysis</p>
+          <div class="d-inline-flex align-items-center justify-content-center mb-2"
+               style="width:60px;height:60px;border-radius:50%;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.25);">
+            <span style="font-size:1.8rem;">🩺</span>
+          </div>
+          <h1 class="fs-3 fw-800 mt-2 mb-1">Create Your Account</h1>
+          <p class="text-muted small mb-0">Start your personalized explainable health risk analysis</p>
         </div>
 
-        <form method="POST" action="{{ url_for('auth.register') }}" novalidate>
+        <form method="POST" action="{{ url_for('auth.register') }}" novalidate id="registerForm">
           {{ form.hidden_tag() }}
 
+          <!-- Full Name -->
           <div class="mb-3">
-            {{ form.full_name.label(class="form-label") }}
-            {{ form.full_name(class="form-control" + (" is-invalid" if form.full_name.errors else ""), placeholder="John Smith", id="regName") }}
+            <label class="form-label fw-500" for="regName">
+              Full Name <span class="text-danger">*</span>
+            </label>
+            {{ form.full_name(class="form-control" + (" is-invalid" if form.full_name.errors else ""), placeholder="John Smith", id="regName", autocomplete="name") }}
             {% for e in form.full_name.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
           </div>
 
+          <!-- Age & Gender -->
           <div class="row g-3 mb-3">
             <div class="col-6">
-              {{ form.age.label(class="form-label") }}
+              <label class="form-label fw-500" for="regAge">
+                Age <span class="text-danger">*</span>
+              </label>
               {{ form.age(class="form-control" + (" is-invalid" if form.age.errors else ""), placeholder="25", id="regAge") }}
               {% for e in form.age.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
             </div>
             <div class="col-6">
-              {{ form.gender.label(class="form-label") }}
+              <label class="form-label fw-500" for="regGender">
+                Gender <span class="text-danger">*</span>
+              </label>
               {{ form.gender(class="form-select" + (" is-invalid" if form.gender.errors else ""), id="regGender") }}
               {% for e in form.gender.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
             </div>
           </div>
 
+          <!-- Height & Weight (Optional) -->
           <div class="row g-3 mb-3">
             <div class="col-6">
-              {{ form.height_cm.label(class="form-label") }}
+              <label class="form-label fw-500" for="regHeight">
+                Height (cm) <span class="text-muted small">(Optional)</span>
+              </label>
               {{ form.height_cm(class="form-control" + (" is-invalid" if form.height_cm.errors else ""), placeholder="170", id="regHeight") }}
               {% for e in form.height_cm.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
             </div>
             <div class="col-6">
-              {{ form.weight_kg.label(class="form-label") }}
+              <label class="form-label fw-500" for="regWeight">
+                Weight (kg) <span class="text-muted small">(Optional)</span>
+              </label>
               {{ form.weight_kg(class="form-control" + (" is-invalid" if form.weight_kg.errors else ""), placeholder="70", id="regWeight") }}
               {% for e in form.weight_kg.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
             </div>
           </div>
 
+          <!-- Email -->
           <div class="mb-3">
-            {{ form.email.label(class="form-label") }}
-            {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), placeholder="you@example.com", id="regEmail") }}
+            <label class="form-label fw-500" for="regEmail">
+              Email Address <span class="text-danger">*</span>
+            </label>
+            {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), placeholder="you@example.com", id="regEmail", autocomplete="email") }}
             {% for e in form.email.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
           </div>
 
+          <!-- Password -->
           <div class="mb-3">
-            {{ form.password.label(class="form-label") }}
-            {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), placeholder="Min 8 chars, 1 uppercase, 1 digit", id="regPassword") }}
-            {% for e in form.password.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+            <label class="form-label fw-500" for="regPassword">
+              Password <span class="text-danger">*</span>
+            </label>
+            <div class="input-group">
+              {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), placeholder="Min 8 chars, 1 uppercase, 1 digit", id="regPassword", autocomplete="new-password") }}
+              <button class="btn btn-outline-secondary toggle-password" type="button" data-target="regPassword" title="Toggle password visibility" style="border-color:var(--surface-border);">
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
+            {% for e in form.password.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+
+            <!-- Password strength bar & checklist -->
+            <div class="mt-2" id="strengthContainer">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="small text-muted">Password strength:</span>
+                <span class="small fw-600" id="strengthText">Weak</span>
+              </div>
+              <div class="progress" style="height:5px;background:rgba(255,255,255,0.08);">
+                <div class="progress-bar bg-danger" id="strengthBar" role="progressbar" style="width: 0%;"></div>
+              </div>
+              <div class="row g-1 mt-2 text-muted small" style="font-size:0.75rem;">
+                <div class="col-6" id="ruleMinLength"><i class="bi bi-x-circle text-danger me-1"></i>Min 8 characters</div>
+                <div class="col-6" id="ruleUpper"><i class="bi bi-x-circle text-danger me-1"></i>1 uppercase letter</div>
+                <div class="col-6" id="ruleLower"><i class="bi bi-x-circle text-danger me-1"></i>1 lowercase letter</div>
+                <div class="col-6" id="ruleDigit"><i class="bi bi-x-circle text-danger me-1"></i>1 number</div>
+              </div>
+            </div>
           </div>
 
+          <!-- Confirm Password -->
           <div class="mb-4">
-            {{ form.confirm_password.label(class="form-label") }}
-            {{ form.confirm_password(class="form-control" + (" is-invalid" if form.confirm_password.errors else ""), placeholder="Repeat password", id="regConfirm") }}
-            {% for e in form.confirm_password.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+            <label class="form-label fw-500" for="regConfirm">
+              Confirm Password <span class="text-danger">*</span>
+            </label>
+            <div class="input-group">
+              {{ form.confirm_password(class="form-control" + (" is-invalid" if form.confirm_password.errors else ""), placeholder="Repeat password", id="regConfirm", autocomplete="new-password") }}
+              <button class="btn btn-outline-secondary toggle-password" type="button" data-target="regConfirm" title="Toggle password visibility" style="border-color:var(--surface-border);">
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
+            {% for e in form.confirm_password.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
           </div>
 
-          <div class="alert alert-info alert-sm py-2 small mb-4" role="alert">
-            <i class="bi bi-info-circle me-1"></i>
-            <strong>Dev mode:</strong> Email verification is skipped automatically.
-          </div>
-
-          <button type="submit" class="btn btn-gradient w-100 py-2 fw-600" id="regSubmit">
-            <i class="bi bi-rocket-takeoff me-2"></i>Create My Account
+          <button type="submit" class="btn btn-gradient w-100 py-2.5 fw-600 mb-3" id="regSubmit">
+            <span class="submit-text"><i class="bi bi-rocket-takeoff me-2"></i>Create My Account</span>
+            <span class="submit-spinner d-none"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Creating Account...</span>
           </button>
         </form>
 
         <hr class="opacity-10 my-4">
         <p class="text-center text-muted small mb-0">
           Already have an account?
-          <a href="{{ url_for('auth.login') }}" class="text-success fw-600">Sign in</a>
+          <a href="{{ url_for('auth.login') }}" class="text-success fw-600 text-decoration-none">Sign in</a>
         </p>
       </div>
     </div>
   </div>
 </div>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+// Show/Hide password toggle
+document.querySelectorAll('.toggle-password').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const targetId = btn.getAttribute('data-target');
+    const input = document.getElementById(targetId);
+    const icon = btn.querySelector('i');
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.className = 'bi bi-eye-slash';
+    } else {
+      input.type = 'password';
+      icon.className = 'bi bi-eye';
+    }
+  });
+});
+
+// Interactive Password Strength Meter
+const passInput = document.getElementById('regPassword');
+const strengthBar = document.getElementById('strengthBar');
+const strengthText = document.getElementById('strengthText');
+
+const ruleMinLength = document.getElementById('ruleMinLength');
+const ruleUpper = document.getElementById('ruleUpper');
+const ruleLower = document.getElementById('ruleLower');
+const ruleDigit = document.getElementById('ruleDigit');
+
+function updateRule(element, isValid, text) {
+  element.innerHTML = isValid
+    ? `<i class="bi bi-check-circle-fill text-success me-1"></i>${text}`
+    : `<i class="bi bi-x-circle text-danger me-1"></i>${text}`;
+}
+
+passInput?.addEventListener('input', () => {
+  const val = passInput.value;
+
+  const hasMin = val.length >= 8;
+  const hasUpper = /[A-Z]/.test(val);
+  const hasLower = /[a-z]/.test(val);
+  const hasDigit = /[0-9]/.test(val);
+
+  updateRule(ruleMinLength, hasMin, 'Min 8 characters');
+  updateRule(ruleUpper, hasUpper, '1 uppercase letter');
+  updateRule(ruleLower, hasLower, '1 lowercase letter');
+  updateRule(ruleDigit, hasDigit, '1 number');
+
+  let score = 0;
+  if (hasMin) score += 25;
+  if (hasUpper) score += 25;
+  if (hasLower) score += 25;
+  if (hasDigit) score += 25;
+
+  strengthBar.style.width = score + '%';
+
+  if (score <= 25) {
+    strengthBar.className = 'progress-bar bg-danger';
+    strengthText.textContent = 'Weak';
+    strengthText.className = 'small fw-600 text-danger';
+  } else if (score <= 50) {
+    strengthBar.className = 'progress-bar bg-warning';
+    strengthText.textContent = 'Fair';
+    strengthText.className = 'small fw-600 text-warning';
+  } else if (score <= 75) {
+    strengthBar.className = 'progress-bar bg-info';
+    strengthText.textContent = 'Good';
+    strengthText.className = 'small fw-600 text-info';
+  } else {
+    strengthBar.className = 'progress-bar bg-success';
+    strengthText.textContent = 'Strong';
+    strengthText.className = 'small fw-600 text-success';
+  }
+});
+
+// Form submit loading state
+document.getElementById('registerForm')?.addEventListener('submit', function() {
+  const btn = document.getElementById('regSubmit');
+  if (btn && this.checkValidity()) {
+    btn.disabled = true;
+    btn.querySelector('.submit-text')?.classList.add('d-none');
+    btn.querySelector('.submit-spinner')?.classList.remove('d-none');
+  }
+});
+</script>
+{% endblock %}
+

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Resend Email Verification{% endblock %}
+{% block content %}
+<div class="container-xl" style="padding:5rem 0 4rem;">
+  <div class="row justify-content-center">
+    <div class="col-md-5 col-lg-4">
+      <div class="glass-card p-4 p-md-5">
+        <div class="text-center mb-4">
+          <div class="d-inline-flex align-items-center justify-content-center mb-2"
+               style="width:60px;height:60px;border-radius:50%;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.25);">
+            <span style="font-size:1.8rem;">✉️</span>
+          </div>
+          <h1 class="fs-3 fw-800 mt-2 mb-1">Resend Verification</h1>
+          <p class="text-muted small mb-0">Enter your email address to receive a new verification link</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('auth.resend_verification') }}" novalidate id="resendForm">
+          {{ form.hidden_tag() }}
+
+          <div class="mb-4">
+            {{ form.email.label(class="form-label fw-500") }}
+            {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), placeholder="you@example.com", id="resendEmail", autocomplete="email") }}
+            {% for e in form.email.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+          </div>
+
+          <button type="submit" class="btn btn-gradient w-100 py-2.5 fw-600 mb-3" id="resendSubmit">
+            <span class="submit-text"><i class="bi bi-send me-2"></i>Resend Link</span>
+            <span class="submit-spinner d-none"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Sending...</span>
+          </button>
+        </form>
+
+        <hr class="opacity-10 my-4">
+        <p class="text-center text-muted small mb-0">
+          <a href="{{ url_for('auth.login') }}" class="text-success fw-600 text-decoration-none">← Back to Login</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('resendForm')?.addEventListener('submit', function() {
+  const btn = document.getElementById('resendSubmit');
+  if (btn && this.checkValidity()) {
+    btn.disabled = true;
+    btn.querySelector('.submit-text')?.classList.add('d-none');
+    btn.querySelector('.submit-spinner')?.classList.remove('d-none');
+  }
+});
+</script>
+{% endblock %}

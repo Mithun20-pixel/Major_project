@@ -672,6 +672,104 @@ h1, h2, h3, h4, h5, h6 {
 /* ============================================================================
    RESPONSIVE TWEAKS
    ============================================================================ */
+/* ============================================================================
+   RESPONSIVE TWEAKS & CUSTOM UTILITIES
+   ============================================================================ */
+/* 5-Column Grid Helper for Bootstrap */
+@media (min-width: 992px) {
+  .col-lg-2-4 {
+    flex: 0 0 auto;
+    width: 20%;
+  }
+}
+
+/* Timeline Step Connector */
+.how-it-works-timeline {
+  position: relative;
+}
+
+@media (min-width: 992px) {
+  .how-it-works-timeline::before {
+    content: '';
+    position: absolute;
+    top: 68px;
+    left: 12%;
+    right: 12%;
+    height: 2px;
+    background: linear-gradient(90deg, rgba(16,185,129,0.1), rgba(16,185,129,0.6), rgba(59,130,246,0.6), rgba(59,130,246,0.1));
+    z-index: 0;
+  }
+}
+
+.step-card {
+  position: relative;
+  z-index: 1;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.step-card:hover {
+  transform: translateY(-5px);
+}
+
+/* Feature Card Glass Enhancement */
+.feature-card {
+  transition: transform 0.3s var(--ease-out), border-color 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid var(--surface-border);
+}
+
+.feature-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(16, 185, 129, 0.4);
+  box-shadow: 0 12px 30px rgba(16, 185, 129, 0.15);
+}
+
+.feature-icon-wrapper {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: var(--hai-green-400);
+  transition: all 0.3s ease;
+}
+
+.feature-card:hover .feature-icon-wrapper {
+  background: var(--grad-primary);
+  color: #ffffff;
+  transform: scale(1.08);
+  box-shadow: var(--glow-green);
+}
+
+/* Trust & Medical Disclaimer Banner */
+.disclaimer-banner {
+  background: rgba(17, 27, 54, 0.85);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  border-left: 4px solid var(--hai-amber-400);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+[data-bs-theme="light"] .disclaimer-banner {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-left: 4px solid #f59e0b;
+}
+
+/* Hero Trust Badge Bar */
+.hero-trust-badge {
+  background: var(--surface-overlay);
+  border: 1px solid var(--surface-border);
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  font-size: 0.825rem;
+  color: var(--text-secondary);
+  backdrop-filter: blur(8px);
+}
+
 @media (max-width: 768px) {
   .step-label  { display: none; }
   .step-circle { width: 36px; height: 36px; font-size: 0.8rem; }
@@ -681,3 +779,4 @@ h1, h2, h3, h4, h5, h6 {
   .stat-card   { padding: 1rem; }
   .stat-value  { font-size: 1.5rem; }
 }
+

@@ -75,6 +75,7 @@ CREATE TABLE IF NOT EXISTS questionnaires (
 
     -- Section 2: Lifestyle
     smoking_status            VARCHAR(50)  NULL,
+    cigarettes_per_day        INT UNSIGNED NULL,
     alcohol_intake            VARCHAR(50)  NULL,
     sleep_hours               FLOAT        NULL,
     screen_time_hours         FLOAT        NULL,

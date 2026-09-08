@@ -25,9 +25,7 @@ main_bp = Blueprint("main", __name__, template_folder="../templates/main")
 
 @main_bp.route("/")
 def index():
-    """Public landing page."""
-    if current_user.is_authenticated:
-        return redirect(url_for("main.dashboard"))
+    """Landing page (accessible to both logged-in and guest users)."""
     return render_template("main/index.html")
 
 

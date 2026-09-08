@@ -132,6 +132,13 @@ class Prediction(db.Model):
         }
 
     @property
+    def diabetes_model_type(self) -> str:
+        """Return the backend diabetes model tier ('basic', 'enhanced', or 'clinical')."""
+        if self.model_name in ("basic", "enhanced", "clinical"):
+            return self.model_name
+        return "basic"
+
+    @property
     def health_scores(self) -> dict:
         """Return all health-score fields as a dict."""
         return {

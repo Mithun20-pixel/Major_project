@@ -51,14 +51,16 @@ def send_verification_email(user) -> None:
         )
 
 
-def send_password_reset_email(user) -> None:
+def send_password_reset_email(user, token: str = None) -> None:
     """
     Send a password-reset link email.
 
     Args:
         user: User ORM instance with .email and .full_name attributes.
+        token: Optional existing token string. Generated if not supplied.
     """
-    token = _generate_token(user.email, salt="password-reset")
+    if not token:
+        token = _generate_token(user.email, salt="password-reset")
     reset_url = url_for("auth.reset_password", token=token, _external=True)
 
     msg = Message(
@@ -73,6 +75,7 @@ def send_password_reset_email(user) -> None:
         current_app.logger.error(
             f"Failed to send reset email to {user.email}: {exc}"
         )
+
 
 
 # ── Email HTML templates ────────────────────────────────────────────────────

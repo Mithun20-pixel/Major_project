@@ -1,51 +1,93 @@
 {% extends "base.html" %}
 {% block title %}Login{% endblock %}
 {% block content %}
-<div class="container-xl" style="padding:6rem 0 4rem;">
+<div class="container-xl" style="padding:5rem 0 4rem;">
   <div class="row justify-content-center">
-    <div class="col-md-5">
+    <div class="col-md-5 col-lg-4">
       <div class="glass-card p-4 p-md-5">
         <div class="text-center mb-4">
-          <span style="font-size:2.5rem;">🔐</span>
-          <h1 class="fs-3 fw-800 mt-2">Welcome Back</h1>
-          <p class="text-muted small">Sign in to your HealthAI account</p>
+          <div class="d-inline-flex align-items-center justify-content-center mb-2"
+               style="width:60px;height:60px;border-radius:50%;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.25);">
+            <span style="font-size:1.8rem;">🔐</span>
+          </div>
+          <h1 class="fs-3 fw-800 mt-2 mb-1">Welcome Back</h1>
+          <p class="text-muted small mb-0">Sign in to access your HealthAI dashboard</p>
         </div>
 
-        <form method="POST" action="{{ url_for('auth.login') }}" novalidate>
+        <form method="POST" action="{{ url_for('auth.login') }}" novalidate id="loginForm">
           {{ form.hidden_tag() }}
 
           <div class="mb-3">
-            {{ form.email.label(class="form-label") }}
-            {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), placeholder="you@example.com", id="loginEmail") }}
+            {{ form.email.label(class="form-label fw-500") }}
+            {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), placeholder="you@example.com", id="loginEmail", autocomplete="email") }}
             {% for e in form.email.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
           </div>
 
           <div class="mb-3">
-            {{ form.password.label(class="form-label") }}
-            {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), placeholder="••••••••", id="loginPassword") }}
-            {% for e in form.password.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              {{ form.password.label(class="form-label fw-500 mb-0") }}
+              <a href="{{ url_for('auth.forgot_password') }}" class="small text-success text-decoration-none">Forgot password?</a>
+            </div>
+            <div class="input-group">
+              {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), placeholder="••••••••", id="loginPassword", autocomplete="current-password") }}
+              <button class="btn btn-outline-secondary toggle-password" type="button" data-target="loginPassword" title="Toggle password visibility" style="border-color:var(--surface-border);">
+                <i class="bi bi-eye" id="loginPasswordIcon"></i>
+              </button>
+            </div>
+            {% for e in form.password.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
           </div>
 
           <div class="d-flex justify-content-between align-items-center mb-4">
             <div class="form-check">
               {{ form.remember_me(class="form-check-input", id="rememberMe") }}
-              <label class="form-check-label small" for="rememberMe">Remember me</label>
+              <label class="form-check-label small text-secondary" for="rememberMe">Remember me</label>
             </div>
-            <a href="{{ url_for('auth.forgot_password') }}" class="small text-success">Forgot password?</a>
+            <a href="{{ url_for('auth.resend_verification') }}" class="small text-muted text-decoration-none">Resend verification?</a>
           </div>
 
-          <button type="submit" class="btn btn-gradient w-100 py-2 fw-600" id="loginSubmit">
-            <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+          <button type="submit" class="btn btn-gradient w-100 py-2.5 fw-600" id="loginSubmit">
+            <span class="submit-text"><i class="bi bi-box-arrow-in-right me-2"></i>Sign In</span>
+            <span class="submit-spinner d-none"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Signing In...</span>
           </button>
         </form>
 
         <hr class="opacity-10 my-4">
         <p class="text-center text-muted small mb-0">
           Don't have an account?
-          <a href="{{ url_for('auth.register') }}" class="text-success fw-600">Create one free</a>
+          <a href="{{ url_for('auth.register') }}" class="text-success fw-600 text-decoration-none">Create one free</a>
         </p>
       </div>
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Show/Hide password toggle
+document.querySelectorAll('.toggle-password').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const targetId = btn.getAttribute('data-target');
+    const input = document.getElementById(targetId);
+    const icon = btn.querySelector('i');
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.className = 'bi bi-eye-slash';
+    } else {
+      input.type = 'password';
+      icon.className = 'bi bi-eye';
+    }
+  });
+});
+
+// Form submit loading state
+document.getElementById('loginForm')?.addEventListener('submit', function() {
+  const btn = document.getElementById('loginSubmit');
+  if (btn && this.checkValidity()) {
+    btn.disabled = true;
+    btn.querySelector('.submit-text')?.classList.add('d-none');
+    btn.querySelector('.submit-spinner')?.classList.remove('d-none');
+  }
+});
+</script>
 {% endblock %}

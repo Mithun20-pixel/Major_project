@@ -13,6 +13,7 @@ from .report         import Report
 from .model_log      import ModelLog
 from .admin          import Admin
 from .daily_health_log import DailyHealthLog
+from .activity_log   import UserActivityLog
 
 __all__ = [
     "User",
@@ -23,4 +24,5 @@ __all__ = [
     "ModelLog",
     "Admin",
     "DailyHealthLog",
+    "UserActivityLog",
 ]

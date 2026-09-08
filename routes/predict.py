@@ -31,6 +31,16 @@ predict_bp = Blueprint("predict", __name__, template_folder="../templates/predic
 def step1():
     """Questionnaire step 1 – Personal & Occupation information."""
     form = PersonalInfoForm()
+    if request.method == "GET":
+        if current_user.age and not form.age.data:
+            form.age.data = current_user.age
+        if current_user.gender and not form.gender.data:
+            form.gender.data = current_user.gender
+        if current_user.height_cm and not form.height_cm.data:
+            form.height_cm.data = current_user.height_cm
+        if current_user.weight_kg and not form.weight_kg.data:
+            form.weight_kg.data = current_user.weight_kg
+
     if form.validate_on_submit():
         # Create a new questionnaire session
         q = Questionnaire(
@@ -56,9 +66,10 @@ def step1():
 def step2(qid: int):
     """Questionnaire step 2 – Lifestyle habits."""
     q = _get_questionnaire_or_abort(qid)
-    form = LifestyleForm()
+    form = LifestyleForm(obj=q if request.method == "GET" else None)
     if form.validate_on_submit():
         q.smoking_status    = form.smoking_status.data
+        q.cigarettes_per_day = form.cigarettes_per_day.data if form.smoking_status.data == "Current" else None
         q.alcohol_intake    = form.alcohol_intake.data
         q.sleep_hours       = form.sleep_hours.data
         q.screen_time_hours = form.screen_time_hours.data
@@ -77,7 +88,7 @@ def step2(qid: int):
 def step3(qid: int):
     """Questionnaire step 3 – Dietary habits."""
     q = _get_questionnaire_or_abort(qid)
-    form = FoodHabitsForm()
+    form = FoodHabitsForm(obj=q if request.method == "GET" else None)
     if form.validate_on_submit():
         q.diet_type          = form.diet_type.data
         q.meals_per_day      = form.meals_per_day.data
@@ -98,7 +109,7 @@ def step3(qid: int):
 def step4(qid: int):
     """Questionnaire step 4 – Medical history & vitals."""
     q = _get_questionnaire_or_abort(qid)
-    form = MedicalHistoryForm()
+    form = MedicalHistoryForm(obj=q if request.method == "GET" else None)
     if form.validate_on_submit():
         q.existing_diseases           = form.existing_diseases.data
         q.current_medications         = form.current_medications.data
@@ -120,7 +131,7 @@ def step4(qid: int):
 def step5(qid: int):
     """Questionnaire step 5 – Family disease history."""
     q = _get_questionnaire_or_abort(qid)
-    form = FamilyHistoryForm()
+    form = FamilyHistoryForm(obj=q if request.method == "GET" else None)
     if form.validate_on_submit():
         q.family_diabetes       = form.family_diabetes.data
         q.family_heart_disease  = form.family_heart_disease.data
@@ -144,7 +155,7 @@ def step5(qid: int):
 def step6(qid: int):
     """Questionnaire step 6 – Exercise & fitness."""
     q = _get_questionnaire_or_abort(qid)
-    form = ExerciseForm()
+    form = ExerciseForm(obj=q if request.method == "GET" else None)
     if form.validate_on_submit():
         q.exercise_frequency     = form.exercise_frequency.data
         q.exercise_type          = form.exercise_type.data
@@ -164,13 +175,17 @@ def step6(qid: int):
 def step7(qid: int):
     """Questionnaire step 7 – Mental health & final submission."""
     q = _get_questionnaire_or_abort(qid)
-    form = MentalHealthForm()
+    is_female = (q.gender == "Female")
+    form = MentalHealthForm(obj=q if request.method == "GET" else None)
+    if not is_female:
+        form.pregnancy_status.data = "N/A"
+
     if form.validate_on_submit():
         q.depression_symptoms   = form.depression_symptoms.data
         q.anxiety_symptoms      = form.anxiety_symptoms.data
         q.mental_health_support = form.mental_health_support.data
         q.meditation_yoga       = form.meditation_yoga.data
-        q.pregnancy_status      = form.pregnancy_status.data
+        q.pregnancy_status      = form.pregnancy_status.data if is_female else "N/A"
         q.is_complete           = True
 
         # Compute BMI and store on questionnaire
@@ -185,10 +200,14 @@ def step7(qid: int):
         prediction = service.run_prediction(q)
         db.session.commit()
 
+        # Log activity
+        from utils.activity_tracker import log_user_activity
+        log_user_activity(current_user, "Ran Risk Prediction", f"Completed disease risk prediction (ID #{prediction.id})")
+
         flash("Analysis complete! Your results are ready.", "success")
         return redirect(url_for("predict.results", prediction_id=prediction.id))
 
-    return render_template("predict/step7.html", form=form, step=7, total_steps=7, qid=qid)
+    return render_template("predict/step7.html", form=form, step=7, total_steps=7, qid=qid, is_female=is_female)
 
 
 # ── Results ────────────────────────────────────────────────────────────────

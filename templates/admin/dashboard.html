@@ -2,29 +2,162 @@
 {% block title %}Admin Dashboard{% endblock %}
 {% block content %}
 <div class="container-xl py-5">
-  <h1 class="section-title mb-1">⚙️ Admin Panel</h1>
-  <p class="text-muted mb-5">System management and statistics</p>
-  <div class="row g-4">
-    {% for icon, label, val, link in [
-      ('👥','Total Users', stats.total_users, url_for('admin.users')),
-      ('📊','Total Predictions', stats.total_predictions, url_for('admin.statistics')),
-      ('🤖','Active Models', stats.active_models, url_for('admin.retrain_models')),
+  <!-- Title Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-5 gap-3">
+    <div>
+      <div class="d-flex align-items-center gap-2">
+        <span class="fs-2">⚙️</span>
+        <div>
+          <h1 class="section-title mb-0 fs-3">Admin Control Center</h1>
+          <p class="text-muted small mb-0">System health monitoring, user activities, and platform statistics</p>
+        </div>
+      </div>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('admin.activities') }}" class="btn btn-outline-info rounded-pill px-4">
+        <i class="bi bi-activity me-1"></i> Live Activity Log
+      </a>
+      <a href="{{ url_for('admin.users') }}" class="btn btn-gradient rounded-pill px-4">
+        <i class="bi bi-people me-1"></i> Manage Users
+      </a>
+    </div>
+  </div>
+
+  <!-- Key Stat Cards -->
+  <div class="row g-4 mb-5">
+    {% set stat_items = [
+      ('👥', 'Total Users', stats.total_users, 'Registered accounts', url_for('admin.users'), 'primary'),
+      ('🟢', 'Active Today', stats.active_today, 'Logged in last 24h', url_for('admin.users'), 'success'),
+      ('📊', 'Total Predictions', stats.total_predictions, 'AI risk analyses', url_for('admin.statistics'), 'info'),
+      ('📋', 'Daily Health Logs', stats.total_daily_logs, 'Health logs saved', url_for('admin.activities', action='Daily'), 'warning'),
+      ('⚡', 'System Activities', stats.total_activities, 'Logged user events', url_for('admin.activities'), 'purple'),
     ] %}
-    <div class="col-md-4">
+    {% for icon, label, val, sub, link, color in stat_items %}
+    <div class="col-6 col-md-4 col-lg-2-4" style="flex: 0 0 auto; width: 20%;">
       <a href="{{ link }}" style="text-decoration:none;">
-        <div class="stat-card">
-          <div class="stat-icon">{{ icon }}</div>
-          <div class="stat-value">{{ val }}</div>
-          <div class="stat-label">{{ label }}</div>
+        <div class="glass-card p-3 h-100 text-center border-hover" style="transition: transform .2s, border-color .2s;">
+          <div class="fs-3 mb-1">{{ icon }}</div>
+          <div class="fw-800 fs-3 text-light">{{ val }}</div>
+          <div class="fw-600 small text-light-50 mb-1">{{ label }}</div>
+          <div class="text-muted" style="font-size:0.7rem;">{{ sub }}</div>
         </div>
       </a>
     </div>
     {% endfor %}
   </div>
-  <div class="row g-4 mt-2">
-    <div class="col-md-4"><a href="{{ url_for('admin.users') }}" class="btn btn-outline-success w-100 rounded-pill py-2"><i class="bi bi-people me-2"></i>Manage Users</a></div>
-    <div class="col-md-4"><a href="{{ url_for('admin.upload_dataset') }}" class="btn btn-outline-success w-100 rounded-pill py-2"><i class="bi bi-upload me-2"></i>Upload Dataset</a></div>
-    <div class="col-md-4"><a href="{{ url_for('admin.retrain_models') }}" class="btn btn-outline-success w-100 rounded-pill py-2"><i class="bi bi-cpu me-2"></i>Retrain Models</a></div>
+
+  <!-- Recent Activity Stream & Quick Actions -->
+  <div class="row g-4">
+    <!-- Live Activity Log Stream -->
+    <div class="col-lg-8">
+      <div class="glass-card p-4 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+          <h5 class="fw-700 mb-0 text-light d-flex align-items-center gap-2">
+            <i class="bi bi-clock-history text-info"></i> Recent User Activities
+          </h5>
+          <a href="{{ url_for('admin.activities') }}" class="btn btn-sm btn-outline-light rounded-pill px-3">View All →</a>
+        </div>
+
+        {% if recent_activities %}
+        <div class="table-responsive">
+          <table class="table table-borderless align-middle mb-0" style="color:var(--text-primary);">
+            <thead>
+              <tr style="color:var(--text-muted);font-size:0.75rem;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,0.08);">
+                <th>User</th>
+                <th>Activity Action</th>
+                <th>IP Address</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for act in recent_activities %}
+              <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                <td>
+                  {% if act.user %}
+                    <a href="{{ url_for('admin.user_detail', user_id=act.user.id) }}" class="fw-600 text-info text-decoration-none small d-flex align-items-center gap-2">
+                      <span class="user-avatar-sm bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width:24px;height:24px;font-size:0.7rem;">
+                        {{ act.user.full_name[0].upper() }}
+                      </span>
+                      {{ act.user.full_name }}
+                    </a>
+                  {% else %}
+                    <span class="text-muted small">Guest / System</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge {% if 'Login' in act.action %}bg-success-subtle text-success border border-success-subtle{% elif 'Prediction' in act.action %}bg-info-subtle text-info border border-info-subtle{% elif 'Log' in act.action %}bg-warning-subtle text-warning border border-warning-subtle{% else %}bg-secondary-subtle text-muted{% endif %} rounded-pill px-2 py-1 small">
+                    {{ act.action }}
+                  </span>
+                  {% if act.details %}
+                    <div class="text-muted small mt-1 font-monospace" style="font-size:0.75rem;">{{ act.details }}</div>
+                  {% endif %}
+                </td>
+                <td class="small text-muted font-monospace">{{ act.ip_address or '—' }}</td>
+                <td class="small text-muted">{{ act.created_at.strftime('%H:%M:%S · %d %b') }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4 text-muted">
+          <i class="bi bi-inbox fs-3 d-block mb-2"></i> No user activity logged yet.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Right Side: Recent Users & Admin Shortcuts -->
+    <div class="col-lg-4 d-flex flex-column gap-4">
+      <!-- Recent Signups -->
+      <div class="glass-card p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+          <h5 class="fw-700 mb-0 text-light d-flex align-items-center gap-2">
+            <i class="bi bi-person-plus text-success"></i> Recent Signups
+          </h5>
+          <a href="{{ url_for('admin.users') }}" class="btn btn-sm btn-outline-light rounded-pill px-3">All Users</a>
+        </div>
+        <div class="d-flex flex-column gap-3">
+          {% for u in recent_users %}
+          <div class="d-flex align-items-center justify-content-between p-2 rounded-3" style="background:rgba(255,255,255,0.03);">
+            <div class="d-flex align-items-center gap-2">
+              <div class="user-avatar-sm bg-gradient text-white rounded-circle d-flex align-items-center justify-content-center fw-700" style="width:36px;height:36px;font-size:0.85rem;">
+                {{ u.full_name[0].upper() }}
+              </div>
+              <div>
+                <a href="{{ url_for('admin.user_detail', user_id=u.id) }}" class="fw-600 text-light text-decoration-none small d-block">{{ u.full_name }}</a>
+                <span class="text-muted small" style="font-size:0.75rem;">{{ u.email }}</span>
+              </div>
+            </div>
+            <a href="{{ url_for('admin.user_detail', user_id=u.id) }}" class="btn btn-sm btn-outline-secondary rounded-circle" title="View details">
+              <i class="bi bi-chevron-right"></i>
+            </a>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- System Quick Tools -->
+      <div class="glass-card p-4">
+        <h5 class="fw-700 mb-3 text-light d-flex align-items-center gap-2">
+          <i class="bi bi-tools text-warning"></i> Admin Tools
+        </h5>
+        <div class="d-grid gap-2">
+          <a href="{{ url_for('admin.users') }}" class="btn btn-outline-light text-start rounded-pill py-2 px-3">
+            <i class="bi bi-people me-2 text-primary"></i> User Management & Permissions
+          </a>
+          <a href="{{ url_for('admin.activities') }}" class="btn btn-outline-light text-start rounded-pill py-2 px-3">
+            <i class="bi bi-activity me-2 text-info"></i> Full Activity Audit Log
+          </a>
+          <a href="{{ url_for('admin.upload_dataset') }}" class="btn btn-outline-light text-start rounded-pill py-2 px-3">
+            <i class="bi bi-upload me-2 text-success"></i> Upload ML Training Dataset
+          </a>
+          <a href="{{ url_for('admin.retrain_models') }}" class="btn btn-outline-light text-start rounded-pill py-2 px-3">
+            <i class="bi bi-cpu me-2 text-warning"></i> Model Retraining Console
+          </a>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}

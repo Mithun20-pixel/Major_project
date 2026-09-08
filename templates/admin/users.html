@@ -1,42 +1,124 @@
-{% extends "base.html" %}{% block title %}Admin – Users{% endblock %}
+{% extends "base.html" %}
+{% block title %}Admin – User Management{% endblock %}
 {% block content %}
 <div class="container-xl py-5">
-  <h1 class="section-title mb-4">👥 User Management</h1>
-  <div class="glass-card p-3">
+  <!-- Header & Search Bar -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <h1 class="section-title mb-1 fs-3">👥 User Management</h1>
+      <p class="text-muted small mb-0">View registered users, inspect profiles, and manage permissions</p>
+    </div>
+    <form method="GET" action="{{ url_for('admin.users') }}" class="d-flex gap-2" style="max-width:320px;">
+      <input type="text" name="q" class="form-control rounded-pill bg-dark text-light border-secondary" placeholder="Search by name or email..." value="{{ q or '' }}">
+      <button type="submit" class="btn btn-primary rounded-pill px-3"><i class="bi bi-search"></i></button>
+    </form>
+  </div>
+
+  <div class="glass-card p-4">
     <div class="table-responsive">
       <table class="table table-borderless align-middle" style="color:var(--text-primary);">
-        <thead><tr style="color:var(--text-muted);font-size:0.78rem;text-transform:uppercase;">
-          <th>ID</th><th>Name</th><th>Email</th><th>BMI</th><th>Status</th><th>Joined</th><th>Actions</th>
-        </tr></thead>
+        <thead>
+          <tr style="color:var(--text-muted);font-size:0.78rem;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,0.08);">
+            <th>ID</th>
+            <th>User</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>BMI</th>
+            <th>Last Login</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
         <tbody>
           {% for u in users.items %}
-          <tr>
-            <td class="text-muted small">{{ u.id }}</td>
-            <td class="fw-600 small">{{ u.full_name }}</td>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+            <td class="text-muted small font-monospace">#{{ u.id }}</td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="user-avatar-sm bg-gradient text-white rounded-circle d-flex align-items-center justify-content-center fw-700" style="width:32px;height:32px;font-size:0.75rem;">
+                  {{ u.full_name[0].upper() }}
+                </div>
+                <div>
+                  <a href="{{ url_for('admin.user_detail', user_id=u.id) }}" class="fw-600 text-light text-decoration-none small d-block">
+                    {{ u.full_name }}
+                  </a>
+                  <span class="text-muted small" style="font-size:0.7rem;">Age: {{ u.age }} · {{ u.gender }}</span>
+                </div>
+              </div>
+            </td>
             <td class="small text-muted">{{ u.email }}</td>
-            <td class="small">{{ u.bmi or '—' }}</td>
             <td>
-              {% if u.is_active %}<span class="badge bg-success">Active</span>
-              {% else %}<span class="badge bg-danger">Disabled</span>{% endif %}
+              {% if u.is_admin %}
+                <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-2 py-1 small">Admin</span>
+              {% else %}
+                <span class="badge bg-secondary-subtle text-muted rounded-pill px-2 py-1 small">User</span>
+              {% endif %}
             </td>
-            <td class="small text-muted">{{ u.created_at.strftime('%d %b %Y') }}</td>
+            <td class="small">
+              {% if u.bmi %}
+                <span class="fw-600">{{ u.bmi }}</span>
+                <span class="text-muted small">({{ u.bmi_category }})</span>
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+            <td class="small text-muted">
+              {% if u.last_login %}
+                {{ u.last_login.strftime('%d %b %Y, %H:%M') }}
+              {% else %}
+                <span class="text-muted">Never</span>
+              {% endif %}
+            </td>
             <td>
-              <form method="POST" action="{{ url_for('admin.toggle_user', user_id=u.id) }}" class="d-inline">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn btn-sm btn-outline-warning rounded-pill px-2 py-1" style="font-size:0.7rem;">
-                  {{ 'Disable' if u.is_active else 'Enable' }}
-                </button>
-              </form>
-              <form method="POST" action="{{ url_for('admin.delete_user', user_id=u.id) }}" class="d-inline ms-1"
-                    onsubmit="return confirm('Delete this user?')">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2 py-1" style="font-size:0.7rem;">Delete</button>
-              </form>
+              {% if u.is_active %}
+                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 small">Active</span>
+              {% else %}
+                <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1 small">Disabled</span>
+              {% endif %}
             </td>
+            <td>
+              <div class="d-flex align-items-center gap-1">
+                <a href="{{ url_for('admin.user_detail', user_id=u.id) }}" class="btn btn-sm btn-outline-info rounded-pill px-2 py-1" style="font-size:0.72rem;" title="Inspect User Activities & History">
+                  <i class="bi bi-eye me-1"></i> Inspect
+                </a>
+                <form method="POST" action="{{ url_for('admin.toggle_user', user_id=u.id) }}" class="d-inline">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-sm btn-outline-warning rounded-pill px-2 py-1" style="font-size:0.72rem;">
+                    {{ 'Disable' if u.is_active else 'Enable' }}
+                  </button>
+                </form>
+                <form method="POST" action="{{ url_for('admin.delete_user', user_id=u.id) }}" class="d-inline ms-1" onsubmit="return confirm('Deactivate this user account?')">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2 py-1" style="font-size:0.72rem;">Delete</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="8" class="text-center py-4 text-muted">No users found.</td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
+
+    <!-- Pagination -->
+    {% if users.pages > 1 %}
+    <nav class="d-flex justify-content-center mt-4">
+      <ul class="pagination pagination-sm mb-0">
+        {% for page_num in users.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+          {% if page_num %}
+            <li class="page-item {% if page_num == users.page %}active{% endif %}">
+              <a class="page-link" href="{{ url_for('admin.users', page=page_num, q=q) }}">{{ page_num }}</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+        {% endfor %}
+      </ul>
+    </nav>
+    {% endif %}
   </div>
-</div>{% endblock %}
+</div>
+{% endblock %}

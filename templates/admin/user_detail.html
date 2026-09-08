@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block title %}Admin – User Profile Inspector: {{ user.full_name }}{% endblock %}
+{% block content %}
+<div class="container-xl py-5">
+  <!-- Back Button & User Title Header -->
+  <div class="mb-4">
+    <a href="{{ url_for('admin.users') }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 mb-3">
+      ← Back to User Management
+    </a>
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <div class="user-avatar-lg bg-gradient text-white rounded-circle d-flex align-items-center justify-content-center fw-800 shadow" style="width:64px;height:64px;font-size:1.8rem;">
+          {{ user.full_name[0].upper() }}
+        </div>
+        <div>
+          <div class="d-flex align-items-center gap-2">
+            <h1 class="section-title mb-0 fs-3">{{ user.full_name }}</h1>
+            {% if user.is_admin %}
+              <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-3 py-1 small">Admin User</span>
+            {% else %}
+              <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 small">Standard User</span>
+            {% endif %}
+            {% if user.is_active %}
+              <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 small">Active</span>
+            {% else %}
+              <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1 small">Disabled</span>
+            {% endif %}
+          </div>
+          <p class="text-muted small mb-0">{{ user.email }} · Joined {{ user.created_at.strftime('%B %d, %Y') }}</p>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="d-flex gap-2">
+        <form method="POST" action="{{ url_for('admin.toggle_user', user_id=user.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-outline-warning rounded-pill px-4">
+            {{ 'Disable Account' if user.is_active else 'Enable Account' }}
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Details Overview Cards -->
+  <div class="row g-4 mb-5">
+    <div class="col-md-3">
+      <div class="glass-card p-3 text-center">
+        <div class="text-muted small">Age & Gender</div>
+        <div class="fw-700 fs-4 text-light mt-1">{{ user.age }} yrs</div>
+        <div class="badge bg-secondary-subtle text-muted small mt-1">{{ user.gender }}</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="glass-card p-3 text-center">
+        <div class="text-muted small">Height & Weight</div>
+        <div class="fw-700 fs-4 text-light mt-1">{{ user.height_cm or '—' }} cm / {{ user.weight_kg or '—' }} kg</div>
+        <div class="badge bg-info-subtle text-info small mt-1">Vitals Profile</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="glass-card p-3 text-center">
+        <div class="text-muted small">Calculated BMI</div>
+        <div class="fw-700 fs-4 gradient-text mt-1">{{ user.bmi or '—' }}</div>
+        <div class="badge bg-success-subtle text-success small mt-1">{{ user.bmi_category }}</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="glass-card p-3 text-center">
+        <div class="text-muted small">Last Logged In</div>
+        <div class="fw-700 fs-6 text-light mt-2">
+          {% if user.last_login %}
+            {{ user.last_login.strftime('%b %d, %Y') }}
+            <div class="text-muted small" style="font-size:0.75rem;">at {{ user.last_login.strftime('%H:%M UTC') }}</div>
+          {% else %}
+            Never
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- User Activity Log Timeline -->
+    <div class="col-lg-7">
+      <div class="glass-card p-4 h-100">
+        <h5 class="fw-700 text-light mb-3 pb-2 border-bottom border-secondary border-opacity-25 d-flex align-items-center gap-2">
+          <i class="bi bi-activity text-info"></i> User Activity Timeline
+        </h5>
+        {% if activity_logs %}
+        <div class="timeline ps-2">
+          {% for log in activity_logs %}
+          <div class="d-flex gap-3 mb-3 pb-3 border-bottom border-secondary border-opacity-10">
+            <div class="mt-1">
+              <span class="badge {% if 'Login' in log.action %}bg-success{% elif 'Prediction' in log.action %}bg-info{% elif 'Log' in log.action %}bg-warning{% else %}bg-secondary{% endif %} rounded-circle p-2 d-inline-block"></span>
+            </div>
+            <div class="flex-grow-1">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="fw-600 text-light small">{{ log.action }}</span>
+                <span class="text-muted small" style="font-size:0.75rem;">{{ log.created_at.strftime('%d %b %Y, %H:%M') }}</span>
+              </div>
+              {% if log.details %}
+                <div class="text-muted small mt-1 font-monospace" style="font-size:0.78rem;">{{ log.details }}</div>
+              {% endif %}
+              <div class="text-muted small" style="font-size:0.7rem;">IP: {{ log.ip_address or 'Unknown' }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-4 text-muted">
+          <i class="bi bi-clock text-muted fs-3 d-block mb-2"></i> No activities recorded for this user yet.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Right Side: Predictions & Daily Logs -->
+    <div class="col-lg-5 d-flex flex-column gap-4">
+      <!-- Recent Predictions -->
+      <div class="glass-card p-4">
+        <h5 class="fw-700 text-light mb-3 pb-2 border-bottom border-secondary border-opacity-25 d-flex align-items-center gap-2">
+          <i class="bi bi-graph-up-arrow text-primary"></i> Risk Analyses Performed ({{ predictions|length }})
+        </h5>
+        {% if predictions %}
+        <div class="d-flex flex-column gap-2">
+          {% for p in predictions %}
+          <div class="p-3 rounded-3 d-flex align-items-center justify-content-between" style="background:rgba(255,255,255,0.03);">
+            <div>
+              <div class="fw-600 small text-light">Prediction #{{ p.id }}</div>
+              <div class="text-muted small" style="font-size:0.75rem;">{{ p.created_at.strftime('%d %b %Y, %H:%M') }}</div>
+            </div>
+            <a href="{{ url_for('predict.results', prediction_id=p.id) }}" class="btn btn-sm btn-outline-info rounded-pill px-3 py-1 small">
+              View Results
+            </a>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-muted small py-3 text-center">No predictions generated yet.</div>
+        {% endif %}
+      </div>
+
+      <!-- Daily Health Logs -->
+      <div class="glass-card p-4">
+        <h5 class="fw-700 text-light mb-3 pb-2 border-bottom border-secondary border-opacity-25 d-flex align-items-center gap-2">
+          <i class="bi bi-journal-heart text-success"></i> Daily Health Logs ({{ daily_logs|length }})
+        </h5>
+        {% if daily_logs %}
+        <div class="d-flex flex-column gap-2">
+          {% for log in daily_logs %}
+          <div class="p-3 rounded-3 d-flex align-items-center justify-content-between" style="background:rgba(255,255,255,0.03);">
+            <div>
+              <div class="fw-600 small text-light">{{ log.log_date.strftime('%B %d, %Y') }}</div>
+              <div class="text-muted small" style="font-size:0.75rem;">Sleep: {{ log.sleep_hours }}h · Water: {{ log.water_intake }}L · Weight: {{ log.weight }}kg</div>
+            </div>
+            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 small">
+              Score: {{ log.healthy_habits_score }}
+            </span>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-muted small py-3 text-center">No daily logs submitted yet.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

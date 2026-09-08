@@ -35,6 +35,7 @@ class Questionnaire(db.Model):
 
     # ── Section 2: Lifestyle ───────────────────────────────────────────────
     smoking_status   = db.Column(db.String(50),  nullable=True)  # Never/Former/Current
+    cigarettes_per_day = db.Column(db.Integer,   nullable=True)  # times/cigarettes smoked per day
     alcohol_intake   = db.Column(db.String(50),  nullable=True)  # None/Occasional/Moderate/Heavy
     sleep_hours      = db.Column(db.Float,        nullable=True)
     screen_time_hours= db.Column(db.Float,        nullable=True)
@@ -114,6 +115,7 @@ class Questionnaire(db.Model):
             "occupation":             self.occupation,
             "working_hours_per_day":  self.working_hours_per_day,
             "smoking_status":         self.smoking_status,
+            "cigarettes_per_day":     self.cigarettes_per_day,
             "alcohol_intake":         self.alcohol_intake,
             "sleep_hours":            self.sleep_hours,
             "screen_time_hours":      self.screen_time_hours,

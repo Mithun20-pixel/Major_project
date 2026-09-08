@@ -16,20 +16,20 @@ from wtforms.validators import (
 
 
 class RegistrationForm(FlaskForm):
-    """User registration form with all required fields."""
+    """User registration form with mandatory and optional health metrics."""
 
     full_name = StringField(
         "Full Name",
         validators=[
             DataRequired(message="Full name is required."),
-            Length(min=2, max=120, message="Name must be 2–120 characters."),
+            Length(min=2, max=120, message="Name must be between 2 and 120 characters."),
         ]
     )
     age = IntegerField(
         "Age",
         validators=[
             DataRequired(message="Age is required."),
-            NumberRange(min=1, max=120, message="Please enter a valid age (1–120)."),
+            NumberRange(min=1, max=120, message="Please enter a valid age between 1 and 120."),
         ]
     )
     gender = SelectField(
@@ -54,19 +54,19 @@ class RegistrationForm(FlaskForm):
     email = StringField(
         "Email Address",
         validators=[
-            DataRequired(message="Email is required."),
+            DataRequired(message="Email address is required."),
             Email(message="Please enter a valid email address."),
-            Length(max=180),
+            Length(max=180, message="Email must not exceed 180 characters."),
         ]
     )
     password = PasswordField(
         "Password",
         validators=[
             DataRequired(message="Password is required."),
-            Length(min=8, message="Password must be at least 8 characters."),
+            Length(min=8, max=128, message="Password must be at least 8 characters long."),
             Regexp(
                 r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)",
-                message="Password must contain uppercase, lowercase, and a digit.",
+                message="Password must contain at least 1 uppercase letter, 1 lowercase letter, and 1 digit.",
             ),
         ]
     )
@@ -74,7 +74,7 @@ class RegistrationForm(FlaskForm):
         "Confirm Password",
         validators=[
             DataRequired(message="Please confirm your password."),
-            EqualTo("password", message="Passwords must match."),
+            EqualTo("password", message="Password confirmation does not match password."),
         ]
     )
     submit = SubmitField("Create Account")
@@ -86,7 +86,7 @@ class LoginForm(FlaskForm):
     email = StringField(
         "Email Address",
         validators=[
-            DataRequired(message="Email is required."),
+            DataRequired(message="Email address is required."),
             Email(message="Please enter a valid email address."),
         ]
     )
@@ -95,7 +95,7 @@ class LoginForm(FlaskForm):
         validators=[DataRequired(message="Password is required.")]
     )
     remember_me = BooleanField("Remember Me")
-    submit = SubmitField("Log In")
+    submit = SubmitField("Sign In")
 
 
 class ForgotPasswordForm(FlaskForm):
@@ -104,7 +104,7 @@ class ForgotPasswordForm(FlaskForm):
     email = StringField(
         "Email Address",
         validators=[
-            DataRequired(message="Email is required."),
+            DataRequired(message="Email address is required."),
             Email(message="Please enter a valid email address."),
         ]
     )
@@ -117,19 +117,33 @@ class ResetPasswordForm(FlaskForm):
     password = PasswordField(
         "New Password",
         validators=[
-            DataRequired(message="Password is required."),
-            Length(min=8, message="Password must be at least 8 characters."),
+            DataRequired(message="New password is required."),
+            Length(min=8, max=128, message="Password must be at least 8 characters long."),
             Regexp(
                 r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)",
-                message="Password must contain uppercase, lowercase, and a digit.",
+                message="Password must contain at least 1 uppercase letter, 1 lowercase letter, and 1 digit.",
             ),
         ]
     )
     confirm_password = PasswordField(
         "Confirm New Password",
         validators=[
-            DataRequired(message="Please confirm your password."),
-            EqualTo("password", message="Passwords must match."),
+            DataRequired(message="Please confirm your new password."),
+            EqualTo("password", message="Password confirmation does not match password."),
         ]
     )
-    submit = SubmitField("Reset Password")
+    submit = SubmitField("Update Password")
+
+
+class ResendVerificationForm(FlaskForm):
+    """Resend email verification link."""
+
+    email = StringField(
+        "Email Address",
+        validators=[
+            DataRequired(message="Email address is required."),
+            Email(message="Please enter a valid email address."),
+        ]
+    )
+    submit = SubmitField("Resend Verification Link")
+
