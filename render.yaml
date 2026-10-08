@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: healthai-backend
+    env: docker
+    plan: free
+    healthCheckPath: /api/mobile/health
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: capacitor://localhost,http://localhost
+      # DB configuration should be supplied manually through the Render Dashboard since
+      # we haven't selected a provider for MySQL yet (Render Free is Postgres only).
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false

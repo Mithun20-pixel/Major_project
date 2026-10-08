@@ -1,8 +1,8 @@
 """
-forms/questionnaire.py - Multi-Step Questionnaire WTForms
-===========================================================
-Seven form classes, one per wizard step.
-All fields include detailed validators for input sanitisation.
+forms/questionnaire.py - Streamlined 4-Step Questionnaire WTForms
+==================================================================
+Four consolidated form classes matching the 4-Pillar health architecture.
+All fields include detailed validators for input sanitisation and boundary checking.
 """
 
 from flask_wtf import FlaskForm
@@ -13,11 +13,12 @@ from wtforms import (
 from wtforms.validators import DataRequired, NumberRange, Optional, Length, ValidationError
 
 
-# ── Step 1: Personal Information ───────────────────────────────────────────
+# ── Step 1: Personal Profile & Vitals ────────────────────────────────────────
 
 class PersonalInfoForm(FlaskForm):
-    """Step 1 – Personal & occupation details."""
+    """Step 1 – Personal demographics & baseline physical vitals (All Mandatory)."""
 
+    # Demographics
     age = IntegerField(
         "Age (years)",
         validators=[
@@ -33,108 +34,73 @@ class PersonalInfoForm(FlaskForm):
     height_cm = FloatField(
         "Height (cm)",
         validators=[
-            Optional(),
+            DataRequired(message="Please enter your height in cm."),
             NumberRange(min=50, max=250, message="Height must be between 50 and 250 cm.")
         ]
     )
     weight_kg = FloatField(
         "Weight (kg)",
         validators=[
-            Optional(),
+            DataRequired(message="Please enter your weight in kg."),
             NumberRange(min=10, max=120, message="Weight must be between 10 and 120 kg.")
         ]
     )
     occupation = StringField(
         "Occupation",
-        validators=[Optional(), Length(max=100, message="Occupation cannot exceed 100 characters.")]
+        validators=[
+            DataRequired(message="Please enter your occupation."),
+            Length(max=100, message="Occupation cannot exceed 100 characters.")
+        ]
     )
     working_hours_per_day = FloatField(
         "Working Hours per Day",
         validators=[
-            Optional(),
+            DataRequired(message="Please enter your working hours per day."),
             NumberRange(min=0, max=24, message="Working hours must be between 0 and 24 hours.")
         ]
     )
-    submit = SubmitField("Next →")
 
-
-# ── Step 2: Lifestyle ──────────────────────────────────────────────────────
-
-class LifestyleForm(FlaskForm):
-    """Step 2 – Lifestyle habits."""
-
-    smoking_status = SelectField(
-        "Smoking Status",
-        choices=[
-            ("", "Select Smoking Status"), ("Never", "Never"),
-            ("Former", "Former Smoker"), ("Current", "Current Smoker")
-        ],
-        validators=[DataRequired(message="Please select your smoking status.")]
-    )
-    cigarettes_per_day = IntegerField(
-        "Times Smoked per Day",
+    # Physical Vitals (Mandatory)
+    blood_pressure_systolic = IntegerField(
+        "Blood Pressure – Systolic (mmHg)",
         validators=[
-            Optional(),
-            NumberRange(min=1, max=100, message="Please enter a valid number of times smoked per day (1–100).")
+            DataRequired(message="Please enter your systolic blood pressure.")
+        ]
+    )
+    blood_pressure_diastolic = IntegerField(
+        "Blood Pressure – Diastolic (mmHg)",
+        validators=[
+            DataRequired(message="Please enter your diastolic blood pressure.")
+        ]
+    )
+    blood_sugar_fasting = FloatField(
+        "Fasting Blood Sugar (mg/dL)",
+        validators=[
+            DataRequired(message="Please enter your fasting blood sugar level.")
+        ]
+    )
+    cholesterol_level = FloatField(
+        "Total Cholesterol (mg/dL)",
+        validators=[
+            DataRequired(message="Please enter your total cholesterol level.")
+        ]
+    )
+    heart_rate_resting = IntegerField(
+        "Resting Heart Rate (bpm)",
+        validators=[
+            DataRequired(message="Please enter your resting heart rate.")
         ]
     )
 
-    def validate_smoking_status(self, field):
-        if field.data == "Current":
-            cigs = self.cigarettes_per_day.data
-            if cigs is None or cigs < 1:
-                msg = "As a current smoker, please enter the number of times you smoke in a day."
-                self.cigarettes_per_day.errors = list(self.cigarettes_per_day.errors) + [msg]
-                raise ValidationError(msg)
-
-    alcohol_intake = SelectField(
-        "Alcohol Intake",
-        choices=[
-            ("", "Select Alcohol Intake"), ("None", "None"),
-            ("Occasional", "Occasional (1-2/week)"),
-            ("Moderate", "Moderate (3-5/week)"),
-            ("Heavy", "Heavy (Daily)")
-        ],
-        validators=[DataRequired(message="Please select your alcohol intake level.")]
-    )
-    sleep_hours = FloatField(
-        "Average Sleep Hours per Night",
-        validators=[
-            DataRequired(message="Please enter your average sleep hours."),
-            NumberRange(min=0, max=24, message="Sleep hours must be between 0 and 24 hours.")
-        ]
-    )
-    screen_time_hours = FloatField(
-        "Daily Screen Time (hours)",
-        validators=[
-            Optional(),
-            NumberRange(min=0, max=24, message="Screen time must be between 0 and 24 hours.")
-        ]
-    )
-    stress_level = IntegerField(
-        "Stress Level (1 = Low, 10 = High)",
-        validators=[
-            DataRequired(message="Please rate your stress level from 1 to 10."),
-            NumberRange(min=1, max=10, message="Stress level must be between 1 and 10.")
-        ]
-    )
-    travel_frequency = SelectField(
-        "Travel Frequency",
-        choices=[
-            ("", "Select Travel Frequency"), ("Rarely", "Rarely"),
-            ("Weekly", "Weekly"), ("Daily", "Daily")
-        ],
-        validators=[Optional()]
-    )
-
-    submit = SubmitField("Next →")
+    submit = SubmitField("Next: Lifestyle & Diet →")
 
 
-# ── Step 3: Food Habits ────────────────────────────────────────────────────
+# ── Step 2: Daily Lifestyle, Nutrition & Activity ────────────────────────────
 
-class FoodHabitsForm(FlaskForm):
-    """Step 3 – Dietary habits."""
+class LifestyleDietForm(FlaskForm):
+    """Step 2 – Dietary habits, physical exercise, and sleep routine."""
 
+    # Nutrition & Hydration
     diet_type = SelectField(
         "Diet Type",
         choices=[
@@ -178,85 +144,8 @@ class FoodHabitsForm(FlaskForm):
             NumberRange(min=0, max=20, message="Servings must be between 0 and 20 per day.")
         ]
     )
-    submit = SubmitField("Next →")
 
-
-# ── Step 4: Medical History ────────────────────────────────────────────────
-
-class MedicalHistoryForm(FlaskForm):
-    """Step 4 – Medical history and current vitals."""
-
-    existing_diseases = TextAreaField(
-        "Existing Diseases (comma-separated, or 'None')",
-        validators=[Optional(), Length(max=500, message="Diseases description cannot exceed 500 characters.")]
-    )
-    current_medications = TextAreaField(
-        "Current Medications (comma-separated, or 'None')",
-        validators=[Optional(), Length(max=500, message="Medications description cannot exceed 500 characters.")]
-    )
-    blood_pressure_systolic = IntegerField(
-        "Blood Pressure – Systolic (mmHg)",
-        validators=[
-            Optional(),
-            NumberRange(min=90, max=180, message="Systolic Blood Pressure must be between 90 and 180 mmHg.")
-        ]
-    )
-    blood_pressure_diastolic = IntegerField(
-        "Blood Pressure – Diastolic (mmHg)",
-        validators=[
-            Optional(),
-            NumberRange(min=70, max=120, message="Diastolic Blood Pressure must be between 70 and 120 mmHg.")
-        ]
-    )
-    blood_sugar_fasting = FloatField(
-        "Fasting Blood Sugar (mg/dL)",
-        validators=[
-            Optional(),
-            NumberRange(min=70, max=130, message="Fasting Blood Sugar must be between 70 and 130 mg/dL.")
-        ]
-    )
-    cholesterol_level = FloatField(
-        "Total Cholesterol (mg/dL)",
-        validators=[
-            Optional(),
-            NumberRange(min=170, max=240, message="Total Cholesterol must be between 170 and 240 mg/dL.")
-        ]
-    )
-    vaccination_status = SelectField(
-        "Vaccination Status",
-        choices=[
-            ("", "Select Vaccination Status"), ("Up to date", "Up to date"),
-            ("Partially vaccinated", "Partially vaccinated"),
-            ("Not vaccinated", "Not vaccinated"),
-            ("Unknown", "Unknown")
-        ],
-        validators=[Optional()]
-    )
-    submit = SubmitField("Next →")
-
-
-# ── Step 5: Family History ─────────────────────────────────────────────────
-
-class FamilyHistoryForm(FlaskForm):
-    """Step 5 – Family disease history (yes/no checkboxes)."""
-
-    family_diabetes       = BooleanField("Diabetes in family")
-    family_heart_disease  = BooleanField("Heart disease in family")
-    family_stroke         = BooleanField("Stroke in family")
-    family_hypertension   = BooleanField("Hypertension in family")
-    family_obesity        = BooleanField("Obesity in family")
-    family_kidney_disease = BooleanField("Kidney disease in family")
-    family_cancer         = BooleanField("Cancer in family")
-    family_thyroid        = BooleanField("Thyroid disease in family")
-    family_depression     = BooleanField("Depression / mental illness in family")
-    submit = SubmitField("Next →")
-
-
-# ── Step 6: Exercise ───────────────────────────────────────────────────────
-
-class ExerciseForm(FlaskForm):
-    """Step 6 – Physical activity and fitness."""
-
+    # Physical Activity & Daily Routine
     exercise_frequency = SelectField(
         "Exercise Frequency",
         choices=[
@@ -278,13 +167,6 @@ class ExerciseForm(FlaskForm):
             NumberRange(min=0, max=480, message="Exercise duration must be between 0 and 480 minutes.")
         ]
     )
-    heart_rate_resting = IntegerField(
-        "Resting Heart Rate (bpm)",
-        validators=[
-            Optional(),
-            NumberRange(min=60, max=100, message="Resting Heart Rate must be between 60 and 100 bpm.")
-        ]
-    )
     daily_steps = IntegerField(
         "Average Daily Steps",
         validators=[
@@ -292,14 +174,120 @@ class ExerciseForm(FlaskForm):
             NumberRange(min=0, max=100000, message="Daily steps must be between 0 and 100,000.")
         ]
     )
-    submit = SubmitField("Next →")
+    sleep_hours = FloatField(
+        "Average Sleep Hours per Night",
+        validators=[
+            DataRequired(message="Please enter your average sleep hours."),
+            NumberRange(min=0, max=24, message="Sleep hours must be between 0 and 24 hours.")
+        ]
+    )
+    screen_time_hours = FloatField(
+        "Daily Screen Time (hours)",
+        validators=[
+            Optional(),
+            NumberRange(min=0, max=24, message="Screen time must be between 0 and 24 hours.")
+        ]
+    )
+    travel_frequency = SelectField(
+        "Travel Frequency",
+        choices=[
+            ("", "Select Travel Frequency"), ("Rarely", "Rarely"),
+            ("Weekly", "Weekly"), ("Daily", "Daily")
+        ],
+        validators=[Optional()]
+    )
+
+    submit = SubmitField("Next: Medical & Family →")
 
 
-# ── Step 7: Mental Health ──────────────────────────────────────────────────
+# ── Step 3: Medical Background & Genetics ────────────────────────────────────
+
+class MedicalHistoryForm(FlaskForm):
+    """Step 3 – Personal clinical history and family hereditary risks."""
+
+    # Personal Medical History
+    existing_diseases = TextAreaField(
+        "Existing Diseases (comma-separated, or 'None')",
+        validators=[Optional(), Length(max=500, message="Diseases description cannot exceed 500 characters.")]
+    )
+    current_medications = TextAreaField(
+        "Current Medications (comma-separated, or 'None')",
+        validators=[Optional(), Length(max=500, message="Medications description cannot exceed 500 characters.")]
+    )
+    vaccination_status = SelectField(
+        "Vaccination Status",
+        choices=[
+            ("", "Select Vaccination Status"), ("Up to date", "Up to date"),
+            ("Partially vaccinated", "Partially vaccinated"),
+            ("Not vaccinated", "Not vaccinated"),
+            ("Unknown", "Unknown")
+        ],
+        validators=[Optional()]
+    )
+
+    # Family Genetics / History
+    family_diabetes       = BooleanField("Diabetes in family")
+    family_heart_disease  = BooleanField("Heart disease in family")
+    family_stroke         = BooleanField("Stroke in family")
+    family_hypertension   = BooleanField("Hypertension in family")
+    family_obesity        = BooleanField("Obesity in family")
+    family_kidney_disease = BooleanField("Kidney disease in family")
+    family_cancer         = BooleanField("Cancer in family")
+    family_thyroid        = BooleanField("Thyroid disease in family")
+    family_depression     = BooleanField("Depression / mental illness in family")
+
+    submit = SubmitField("Next: Mind & Wellness →")
+
+
+# ── Step 4: Mental Well-being, Habits & Submission ───────────────────────────
 
 class MentalHealthForm(FlaskForm):
-    """Step 7 – Mental health status and final questions."""
+    """Step 4 – Habits, stress, mental well-being and final submission."""
 
+    # Habits & Stressors
+    stress_level = IntegerField(
+        "Stress Level (1 = Low, 10 = High)",
+        validators=[
+            DataRequired(message="Please rate your stress level from 1 to 10."),
+            NumberRange(min=1, max=10, message="Stress level must be between 1 and 10.")
+        ]
+    )
+    smoking_status = SelectField(
+        "Smoking Status",
+        choices=[
+            ("", "Select Smoking Status"), ("Never", "Never"),
+            ("Former", "Former Smoker"), ("Current", "Current Smoker")
+        ],
+        validators=[DataRequired(message="Please select your smoking status.")]
+    )
+    cigarettes_per_day = IntegerField(
+        "Times Smoked per Day",
+        validators=[
+            Optional(),
+            NumberRange(min=1, max=100, message="Please enter a valid number of times smoked per day (1–100).")
+        ]
+    )
+
+    def validate_smoking_status(self, field):
+        if field.data == "Current":
+            cigs = self.cigarettes_per_day.data
+            if cigs is None or cigs < 1:
+                msg = "As a current smoker, please enter the number of times you smoke in a day."
+                self.cigarettes_per_day.errors = list(self.cigarettes_per_day.errors) + [msg]
+                raise ValidationError(msg)
+
+    alcohol_intake = SelectField(
+        "Alcohol Intake",
+        choices=[
+            ("", "Select Alcohol Intake"), ("None", "None"),
+            ("Occasional", "Occasional (1-2/week)"),
+            ("Moderate", "Moderate (3-5/week)"),
+            ("Heavy", "Heavy (Daily)")
+        ],
+        validators=[DataRequired(message="Please select your alcohol intake level.")]
+    )
+
+    # Mental Well-being
     depression_symptoms   = BooleanField("I experience frequent low mood / depression symptoms")
     anxiety_symptoms      = BooleanField("I experience frequent anxiety or panic attacks")
     mental_health_support = BooleanField("I am currently receiving mental health support")
@@ -321,5 +309,12 @@ class MentalHealthForm(FlaskForm):
         ],
         validators=[Optional()]
     )
+
     submit = SubmitField("Analyze My Health 🚀")
 
+
+# Backward-compatibility aliases if imported elsewhere
+LifestyleForm = LifestyleDietForm
+FoodHabitsForm = LifestyleDietForm
+ExerciseForm = LifestyleDietForm
+FamilyHistoryForm = MedicalHistoryForm

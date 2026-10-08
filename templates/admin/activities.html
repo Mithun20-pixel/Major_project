@@ -9,7 +9,7 @@
       <p class="text-muted small mb-0">Real-time log of user logins, risk analyses, and health tracking events</p>
     </div>
     <form method="GET" action="{{ url_for('admin.activities') }}" class="d-flex gap-2" style="max-width:380px;">
-      <input type="text" name="q" class="form-control rounded-pill bg-dark text-light border-secondary" placeholder="Search user, action, IP..." value="{{ q or '' }}">
+      <input type="text" name="q" class="form-control rounded-pill border-secondary" placeholder="Search user, action, IP..." value="{{ q or '' }}">
       <button type="submit" class="btn btn-primary rounded-pill px-3"><i class="bi bi-search"></i></button>
     </form>
   </div>
@@ -69,11 +69,11 @@
               {% endif %}
             </td>
             <td>
-              <span class="badge {% if 'Login' in log.action %}bg-success-subtle text-success border border-success-subtle{% elif 'Prediction' in log.action %}bg-info-subtle text-info border border-info-subtle{% elif 'Log' in log.action %}bg-warning-subtle text-warning border border-warning-subtle{% elif 'Out' in log.action %}bg-danger-subtle text-danger border border-danger-subtle{% else %}bg-secondary-subtle text-light{% endif %} rounded-pill px-3 py-1 small">
+              <span class="badge {% if 'Login' in log.action %}bg-success-subtle text-success border border-success-subtle{% elif 'Prediction' in log.action %}bg-info-subtle text-info border border-info-subtle{% elif 'Log' in log.action %}bg-warning-subtle text-warning border border-warning-subtle{% elif 'Out' in log.action %}bg-danger-subtle text-danger border border-danger-subtle{% else %}bg-secondary-subtle text-body{% endif %} rounded-pill px-3 py-1 small">
                 {{ log.action }}
               </span>
             </td>
-            <td class="small text-light-50">
+            <td class="small text-secondary">
               {% if log.details %}
                 <span class="font-monospace text-wrap" style="font-size:0.8rem;">{{ log.details }}</span>
               {% else %}
@@ -81,7 +81,7 @@
               {% endif %}
             </td>
             <td class="small text-muted font-monospace">
-              <span class="badge bg-dark border border-secondary text-muted">{{ log.ip_address or 'Unknown' }}</span>
+              <span class="badge bg-secondary-subtle border border-secondary-subtle text-muted">{{ log.ip_address or 'Unknown' }}</span>
             </td>
             <td class="small text-muted">
               {{ log.created_at.strftime('%d %b %Y, %H:%M:%S') }}

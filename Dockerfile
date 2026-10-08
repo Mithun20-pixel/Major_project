@@ -33,18 +33,17 @@ RUN useradd -m -u 1000 appuser && chown -R appuser /app
 USER appuser
 
 # ── Expose port ────────────────────────────────────────────────────────
-EXPOSE 8000
+EXPOSE ${PORT:-8000}
 
 # ── Health check ───────────────────────────────────────────────────────
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/')" || exit 1
+  CMD python -c "import urllib.request, os; urllib.request.urlopen(f'http://localhost:{os.environ.get(\"PORT\", 8000)}/')" || exit 1
 
 # ── Start Gunicorn ─────────────────────────────────────────────────────
-CMD ["gunicorn", \
-     "--bind", "0.0.0.0:8000", \
-     "--workers", "4", \
-     "--worker-class", "sync", \
-     "--timeout", "120", \
-     "--access-logfile", "-", \
-     "--error-logfile", "-", \
-     "app:create_app('production')"]
+CMD gunicorn --bind 0.0.0.0:${PORT:-8000} \
+     --workers 1 \
+     --worker-class sync \
+     --timeout 120 \
+     --access-logfile - \
+     --error-logfile - \
+     "app:create_app('production')"

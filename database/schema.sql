@@ -6,11 +6,11 @@
 -- =============================================================================
 
 -- Create and select database
-CREATE DATABASE IF NOT EXISTS explainable_ai_health
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
+-- CREATE DATABASE IF NOT EXISTS explainable_ai_health
+--   CHARACTER SET utf8mb4
+--   COLLATE utf8mb4_unicode_ci;
 
-USE explainable_ai_health;
+-- USE explainable_ai_health;
 
 -- =============================================================================
 -- TABLE: admins

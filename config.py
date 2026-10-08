@@ -46,6 +46,10 @@ class BaseConfig:
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
 
+    # ── JWT Mobile API ─────────────────────────────────────────────────────
+    JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "change-me-in-production-jwt-secret!")
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=2)
+
     # ── CSRF ───────────────────────────────────────────────────────────────
     WTF_CSRF_ENABLED = True
     WTF_CSRF_TIME_LIMIT = 3600  # 1 hour
@@ -104,14 +108,31 @@ class TestingConfig(BaseConfig):
 class ProductionConfig(BaseConfig):
     """Production configuration with MySQL and security hardened."""
 
+    # ── Security & Secrets ──────────────────────────────────────────────────
+    SECRET_KEY = os.environ.get("SECRET_KEY")
+    JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY")
+
+    if not SECRET_KEY or SECRET_KEY == "change-me-in-production-secret-key-123!":
+        raise RuntimeError("SECRET_KEY must be configured in production.")
+    if not JWT_SECRET_KEY or JWT_SECRET_KEY == "change-me-in-production-jwt-secret!":
+        raise RuntimeError("JWT_SECRET_KEY must be configured in production.")
+
+    DEBUG = False
+    TESTING = False
+
+    # ── Cookies & Sessions ──────────────────────────────────────────────────
     SESSION_COOKIE_SECURE = True   # HTTPS only
     SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
     PREFERRED_URL_SCHEME = "https"
+
+    # ── Database ────────────────────────────────────────────────────────────
     # Production uses MySQL
     SQLALCHEMY_DATABASE_URI = (
         f"mysql+pymysql://{BaseConfig.DB_USER}:{BaseConfig.DB_PASSWORD}"
         f"@{BaseConfig.DB_HOST}:{BaseConfig.DB_PORT}/{BaseConfig.DB_NAME}"
     )
+
     SQLALCHEMY_ENGINE_OPTIONS = {
         "pool_recycle": 280,
         "pool_pre_ping": True,
@@ -119,6 +140,18 @@ class ProductionConfig(BaseConfig):
         "max_overflow": 20,
     }
 
+    # Aiven/Managed MySQL SSL Configuration
+    db_ssl_ca_path = os.environ.get("DB_SSL_CA_PATH")
+    if db_ssl_ca_path:
+        SQLALCHEMY_ENGINE_OPTIONS["connect_args"] = {
+            "ssl": {
+                "ca": db_ssl_ca_path
+            }
+        }
+
+    # ── CORS ───────────────────────────────────────────────────────────────
+    # For production, we don't allow wildcard '*'. We allow only specific origins.
+    CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "capacitor://localhost,http://localhost").split(",")
 
 # ── Config registry ────────────────────────────────────────────────────────
 config_map = {

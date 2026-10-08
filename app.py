@@ -15,7 +15,7 @@ from flask import Flask, render_template
 from config import get_config
 
 # ── Extension instances (imported from extensions.py to avoid circular imports) ──
-from extensions import db, login_manager, csrf, mail, bcrypt, migrate
+from extensions import db, login_manager, csrf, mail, bcrypt, migrate, jwt, cors
 
 
 
@@ -133,6 +133,10 @@ def _init_extensions(app: Flask) -> None:
     mail.init_app(app)
     bcrypt.init_app(app)
     migrate.init_app(app, db)
+    jwt.init_app(app)
+
+    cors_origins = app.config.get("CORS_ORIGINS", "*")
+    cors.init_app(app, resources={r"/api/mobile/*": {"origins": cors_origins}})
 
     # Configure Flask-Login behaviour
     login_manager.login_view = "auth.login"
@@ -155,6 +159,7 @@ def _register_blueprints(app: Flask) -> None:
     from routes.admin   import admin_bp
     from routes.api     import api_bp
     from routes.tracker import tracker_bp
+    from routes.api_mobile import api_mobile_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp,    url_prefix="/auth")
@@ -162,6 +167,10 @@ def _register_blueprints(app: Flask) -> None:
     app.register_blueprint(admin_bp,   url_prefix="/admin")
     app.register_blueprint(api_bp,     url_prefix="/api/v1")
     app.register_blueprint(tracker_bp)
+    app.register_blueprint(api_mobile_bp, url_prefix="/api/mobile")
+
+    # Exempt the mobile API from CSRF protection as it uses JWT
+    csrf.exempt(api_mobile_bp)
 
 
 def _register_error_handlers(app: Flask) -> None:

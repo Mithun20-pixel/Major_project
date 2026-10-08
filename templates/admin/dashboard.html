@@ -37,8 +37,8 @@
       <a href="{{ link }}" style="text-decoration:none;">
         <div class="glass-card p-3 h-100 text-center border-hover" style="transition: transform .2s, border-color .2s;">
           <div class="fs-3 mb-1">{{ icon }}</div>
-          <div class="fw-800 fs-3 text-light">{{ val }}</div>
-          <div class="fw-600 small text-light-50 mb-1">{{ label }}</div>
+          <div class="fw-800 fs-3">{{ val }}</div>
+          <div class="fw-600 small text-muted mb-1">{{ label }}</div>
           <div class="text-muted" style="font-size:0.7rem;">{{ sub }}</div>
         </div>
       </a>
@@ -52,7 +52,7 @@
     <div class="col-lg-8">
       <div class="glass-card p-4 h-100">
         <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-secondary border-opacity-25">
-          <h5 class="fw-700 mb-0 text-light d-flex align-items-center gap-2">
+          <h5 class="fw-700 mb-0 d-flex align-items-center gap-2">
             <i class="bi bi-clock-history text-info"></i> Recent User Activities
           </h5>
           <a href="{{ url_for('admin.activities') }}" class="btn btn-sm btn-outline-light rounded-pill px-3">View All →</a>
@@ -112,7 +112,7 @@
       <!-- Recent Signups -->
       <div class="glass-card p-4">
         <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-secondary border-opacity-25">
-          <h5 class="fw-700 mb-0 text-light d-flex align-items-center gap-2">
+          <h5 class="fw-700 mb-0 d-flex align-items-center gap-2">
             <i class="bi bi-person-plus text-success"></i> Recent Signups
           </h5>
           <a href="{{ url_for('admin.users') }}" class="btn btn-sm btn-outline-light rounded-pill px-3">All Users</a>
@@ -125,7 +125,7 @@
                 {{ u.full_name[0].upper() }}
               </div>
               <div>
-                <a href="{{ url_for('admin.user_detail', user_id=u.id) }}" class="fw-600 text-light text-decoration-none small d-block">{{ u.full_name }}</a>
+                <a href="{{ url_for('admin.user_detail', user_id=u.id) }}" class="fw-600 text-decoration-none small d-block">{{ u.full_name }}</a>
                 <span class="text-muted small" style="font-size:0.75rem;">{{ u.email }}</span>
               </div>
             </div>
@@ -139,7 +139,7 @@
 
       <!-- System Quick Tools -->
       <div class="glass-card p-4">
-        <h5 class="fw-700 mb-3 text-light d-flex align-items-center gap-2">
+        <h5 class="fw-700 mb-3 d-flex align-items-center gap-2">
           <i class="bi bi-tools text-warning"></i> Admin Tools
         </h5>
         <div class="d-grid gap-2">

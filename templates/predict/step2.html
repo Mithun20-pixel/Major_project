@@ -1,21 +1,21 @@
 {% extends "base.html" %}
-{% block title %}Step 2 – Lifestyle{% endblock %}
+{% block title %}Step 2 – Lifestyle & Diet{% endblock %}
 {% block content %}
-<div class="container-xl py-5" style="max-width:740px;">
+<div class="container-xl py-5" style="max-width:760px;">
 
   <!-- Step progress header -->
   <div class="mb-4">
     <div class="d-flex justify-content-between align-items-center mb-1">
-      <span class="small text-muted font-monospace">Step 2 of 7 · Lifestyle Habits</span>
-      <span class="small fw-600 text-success">29% Complete</span>
+      <span class="small text-muted font-monospace">Step 2 of 4 · Lifestyle &amp; Diet</span>
+      <span class="small fw-600 text-success">50% Complete</span>
     </div>
     <div class="progress mb-4" style="height:6px;background:var(--surface-overlay);border-radius:50px;">
-      <div class="progress-bar" role="progressbar" style="width: 29%; background:var(--grad-primary); border-radius:50px;" aria-valuenow="2" aria-valuemin="1" aria-valuemax="7"></div>
+      <div class="progress-bar" role="progressbar" style="width: 50%; background:var(--grad-primary); border-radius:50px;" aria-valuenow="2" aria-valuemin="1" aria-valuemax="4"></div>
     </div>
 
     <!-- Step wizard pills -->
     <div class="step-wizard">
-      {% for i, label in [(1,'Personal'),(2,'Lifestyle'),(3,'Food'),(4,'Medical'),(5,'Family'),(6,'Exercise'),(7,'Mental')] %}
+      {% for i, label in [(1,'Profile & Vitals'),(2,'Lifestyle & Diet'),(3,'Medical & Family'),(4,'Mind & Wellness')] %}
       <div class="step-item {{ 'active' if step == i else ('done' if step > i else 'inactive') }}">
         <div class="step-circle">{% if step > i %}<i class="bi bi-check2"></i>{% else %}{{ i }}{% endif %}</div>
         <div class="step-label">{{ label }}</div>
@@ -25,116 +25,215 @@
   </div>
 
   <div class="glass-card p-4 p-md-5">
-    <h2 class="fs-4 fw-700 mb-1">Lifestyle Habits</h2>
-    <p class="text-muted small mb-4">Your daily routines, sleep, and habits strongly influence core disease risk models.</p>
+    <h2 class="fs-4 fw-700 mb-1">Lifestyle, Nutrition &amp; Activity</h2>
+    <p class="text-muted small mb-4">Your nutritional choices, physical habits, and sleep patterns strongly influence metabolic risk models.</p>
 
-    <!-- Medical Notice -->
+    <!-- Notice -->
     <div class="alert alert-warning bg-warning bg-opacity-10 border-warning border-opacity-25 py-2 px-3 small mb-4 d-flex align-items-center gap-2">
       <i class="bi bi-info-circle text-warning flex-shrink-0"></i>
-      <span class="text-secondary">Informational assessment only. All data remains encrypted and private.</span>
+      <span class="text-secondary">Please enter your typical daily or weekly habits for the most accurate health predictions.</span>
     </div>
 
     <form method="POST" novalidate id="step2Form">
       {{ form.hidden_tag() }}
 
+      <!-- Section: Nutrition & Hydration -->
+      <h5 class="fs-6 fw-700 text-uppercase tracking-wider text-success mb-3 d-flex align-items-center gap-2">
+        <i class="bi bi-egg-fried"></i> Nutrition &amp; Hydration
+      </h5>
+
       <div class="row g-3 mb-3">
         <div class="col-6">
-          <label class="form-label fw-500" for="q2Smoke">
-            {{ form.smoking_status.label.text }} <span class="text-danger">*</span>
+          <label class="form-label fw-500" for="q2Diet">
+            {{ form.diet_type.label.text }} <span class="text-danger">*</span>
           </label>
-          {{ form.smoking_status(class="form-select" + (" is-invalid" if form.smoking_status.errors else ""), id="q2Smoke") }}
-          {% for e in form.smoking_status.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+          {{ form.diet_type(class="form-select" + (" is-invalid" if form.diet_type.errors else ""), id="q2Diet") }}
+          {% for e in form.diet_type.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
         </div>
         <div class="col-6">
-          <label class="form-label fw-500" for="q2Alcohol">
-            {{ form.alcohol_intake.label.text }} <span class="text-danger">*</span>
+          <label class="form-label fw-500" for="q2Meals">
+            {{ form.meals_per_day.label.text }} <span class="text-danger">*</span>
+            <span class="badge bg-secondary-subtle text-muted ms-1 small">1–10</span>
           </label>
-          {{ form.alcohol_intake(class="form-select" + (" is-invalid" if form.alcohol_intake.errors else ""), id="q2Alcohol") }}
-          {% for e in form.alcohol_intake.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
-        </div>
-      </div>
-
-      <!-- Conditional Smoker Frequency Field -->
-      <div class="mb-3" id="smokingFrequencyContainer" style="display: none;">
-        <div class="p-3 rounded-3" style="background: rgba(239, 68, 68, 0.06); border: 1px dashed rgba(239, 68, 68, 0.3);">
-          <label class="form-label fw-600 text-danger" for="q2Cigarettes">
-            {{ form.cigarettes_per_day.label.text }} <span class="text-danger">*</span>
-          </label>
-          {{ form.cigarettes_per_day(class="form-control" + (" is-invalid" if form.cigarettes_per_day.errors else ""), id="q2Cigarettes", placeholder="e.g. 5, 10, 20", min="1", max="100", data_min="1", data_max="100", data_label="Times Smoked per Day", data_unit="cigs/day") }}
-          <div class="form-text text-muted small"><i class="bi bi-info-circle me-1"></i>Since you selected Current Smoker, please specify daily frequency.</div>
-          {% for e in form.cigarettes_per_day.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+          {{ form.meals_per_day(class="form-control" + (" is-invalid" if form.meals_per_day.errors else ""), placeholder="e.g. 3", id="q2Meals", min="1", max="10", data_min="1", data_max="10", data_label="Meals per Day", data_unit="meals") }}
+          {% for e in form.meals_per_day.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
         </div>
       </div>
 
       <div class="row g-3 mb-3">
         <div class="col-6">
+          <label class="form-label fw-500" for="q2Water">
+            {{ form.water_intake_L.label.text }} <span class="text-danger">*</span>
+            <span class="badge bg-secondary-subtle text-muted ms-1 small">0–20 L</span>
+          </label>
+          {{ form.water_intake_L(class="form-control" + (" is-invalid" if form.water_intake_L.errors else ""), placeholder="e.g. 2.5", id="q2Water", min="0", max="20", step="0.1", data_min="0", data_max="20", data_label="Daily Water Intake", data_unit="litres") }}
+          {% for e in form.water_intake_L.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-6">
+          <label class="form-label fw-500" for="q2FastFood">
+            {{ form.fast_food_per_week.label.text }} <span class="text-danger">*</span>
+            <span class="badge bg-secondary-subtle text-muted ms-1 small">0–21</span>
+          </label>
+          {{ form.fast_food_per_week(class="form-control" + (" is-invalid" if form.fast_food_per_week.errors else ""), placeholder="e.g. 1", id="q2FastFood", min="0", max="21", data_min="0", data_max="21", data_label="Fast Food Meals per Week", data_unit="meals") }}
+          {% for e in form.fast_food_per_week.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-6">
+          <label class="form-label fw-500" for="q2Sugar">
+            {{ form.sugar_intake.label.text }} <span class="text-danger">*</span>
+          </label>
+          {{ form.sugar_intake(class="form-select" + (" is-invalid" if form.sugar_intake.errors else ""), id="q2Sugar") }}
+          {% for e in form.sugar_intake.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-6">
+          <label class="form-label fw-500" for="q2FruitVeg">
+            {{ form.fruit_veg_servings.label.text }} <span class="text-danger">*</span>
+            <span class="badge bg-secondary-subtle text-muted ms-1 small">0–20</span>
+          </label>
+          {{ form.fruit_veg_servings(class="form-control" + (" is-invalid" if form.fruit_veg_servings.errors else ""), placeholder="e.g. 3", id="q2FruitVeg", min="0", max="20", data_min="0", data_max="20", data_label="Fruit & Veg Servings", data_unit="servings") }}
+          {% for e in form.fruit_veg_servings.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
+      </div>
+
+      <hr class="my-4 border-secondary opacity-25">
+
+      <!-- Section: Activity, Sleep & Routine -->
+      <h5 class="fs-6 fw-700 text-uppercase tracking-wider text-primary mb-3 d-flex align-items-center gap-2">
+        <i class="bi bi-activity"></i> Physical Activity &amp; Sleep Routine
+      </h5>
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="form-label fw-500" for="q2ExerciseFreq">
+            {{ form.exercise_frequency.label.text }} <span class="text-danger">*</span>
+          </label>
+          {{ form.exercise_frequency(class="form-select" + (" is-invalid" if form.exercise_frequency.errors else ""), id="q2ExerciseFreq") }}
+          {% for e in form.exercise_frequency.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-500" for="q2ExerciseType">{{ form.exercise_type.label.text }}</label>
+          {{ form.exercise_type(class="form-control" + (" is-invalid" if form.exercise_type.errors else ""), placeholder="e.g. Running, Gym, Walking, Swimming", id="q2ExerciseType") }}
+          {% for e in form.exercise_type.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-6">
+          <label class="form-label fw-500" for="q2ExerciseDuration">
+            {{ form.exercise_duration_min.label.text }} <span class="badge bg-secondary-subtle text-muted ms-1 small">0–480 mins</span>
+          </label>
+          {{ form.exercise_duration_min(class="form-control" + (" is-invalid" if form.exercise_duration_min.errors else ""), placeholder="e.g. 45", id="q2ExerciseDuration", min="0", max="480") }}
+          {% for e in form.exercise_duration_min.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-6">
+          <label class="form-label fw-500" for="q2DailySteps">
+            {{ form.daily_steps.label.text }} <span class="badge bg-secondary-subtle text-muted ms-1 small">0–100k</span>
+          </label>
+          {{ form.daily_steps(class="form-control" + (" is-invalid" if form.daily_steps.errors else ""), placeholder="e.g. 7500", id="q2DailySteps", min="0", max="100000") }}
+          {% for e in form.daily_steps.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
           <label class="form-label fw-500" for="q2Sleep">
             {{ form.sleep_hours.label.text }} <span class="text-danger">*</span>
             <span class="badge bg-secondary-subtle text-muted ms-1 small">0–24 hrs</span>
           </label>
-          {{ form.sleep_hours(class="form-control" + (" is-invalid" if form.sleep_hours.errors else ""), placeholder="e.g. 7.5", id="q2Sleep", min="0", max="24", data_min="0", data_max="24", data_label="Sleep Hours", data_unit="hrs") }}
+          {{ form.sleep_hours(class="form-control" + (" is-invalid" if form.sleep_hours.errors else ""), placeholder="e.g. 7.5", id="q2Sleep", min="0", max="24", step="0.5", data_min="0", data_max="24", data_label="Sleep Hours", data_unit="hours") }}
           {% for e in form.sleep_hours.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
         </div>
-        <div class="col-6">
+        <div class="col-md-4">
           <label class="form-label fw-500" for="q2Screen">
             {{ form.screen_time_hours.label.text }} <span class="badge bg-secondary-subtle text-muted ms-1 small">0–24 hrs</span>
           </label>
-          {{ form.screen_time_hours(class="form-control" + (" is-invalid" if form.screen_time_hours.errors else ""), placeholder="e.g. 4", id="q2Screen", min="0", max="24", data_min="0", data_max="24", data_label="Screen Time", data_unit="hrs") }}
+          {{ form.screen_time_hours(class="form-control" + (" is-invalid" if form.screen_time_hours.errors else ""), placeholder="e.g. 6", id="q2Screen", min="0", max="24", step="0.5", data_min="0", data_max="24", data_label="Daily Screen Time", data_unit="hours") }}
           {% for e in form.screen_time_hours.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-500" for="q2Travel">{{ form.travel_frequency.label.text }}</label>
+          {{ form.travel_frequency(class="form-select" + (" is-invalid" if form.travel_frequency.errors else ""), id="q2Travel") }}
+          {% for e in form.travel_frequency.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
         </div>
       </div>
 
-      <div class="mb-3">
-        <label class="form-label fw-500" for="q2Stress">
-          {{ form.stress_level.label.text }} <span class="text-danger">*</span>
-          <span class="badge bg-secondary-subtle text-muted ms-1 small">1–10</span>
-        </label>
-        {{ form.stress_level(class="form-control" + (" is-invalid" if form.stress_level.errors else ""), placeholder="1 (Low) to 10 (High)", id="q2Stress", min="1", max="10", data_min="1", data_max="10", data_label="Stress Level", data_unit="/10") }}
-        {% for e in form.stress_level.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
-      </div>
+      <!-- Action buttons & Dynamic Step Unlock -->
+      <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center pt-3 border-top border-secondary border-opacity-25 gap-3">
+        <a href="{{ url_for('predict.step1', qid=qid) }}" class="btn btn-outline-secondary rounded-pill px-4">← Back</a>
 
-      <div class="mb-4">
-        <label class="form-label fw-500" for="q2Travel">{{ form.travel_frequency.label.text }}</label>
-        {{ form.travel_frequency(class="form-select" + (" is-invalid" if form.travel_frequency.errors else ""), id="q2Travel") }}
-        {% for e in form.travel_frequency.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
-      </div>
+        <div class="d-flex align-items-center gap-3">
+          <!-- Notice shown when current step is incomplete -->
+          <div id="stepLockedNotice" class="d-flex align-items-center gap-2 text-warning small bg-warning bg-opacity-10 border border-warning border-opacity-25 px-3 py-2 rounded-pill">
+            <i class="bi bi-lock-fill text-warning"></i>
+            <span>Fill all mandatory fields above to unlock Step 3 (<span id="filledCount">0</span>/8)</span>
+          </div>
 
-      <div class="d-flex justify-content-between align-items-center pt-2">
-        <a href="{{ url_for('predict.step1') }}" class="btn btn-outline-secondary rounded-pill px-4">← Back</a>
-        <button type="submit" class="btn btn-gradient rounded-pill px-4 py-2" id="q2Submit">
-          Next Step <i class="bi bi-arrow-right ms-1"></i>
-        </button>
+          <!-- Next button only appears when current step is completely filled -->
+          <button type="submit" class="btn btn-gradient rounded-pill px-4 py-2" id="q2Submit" style="display: none;">
+            Next: Medical &amp; Family <i class="bi bi-arrow-right ms-1"></i>
+          </button>
+        </div>
       </div>
     </form>
   </div>
 </div>
 
 {% include "predict/_boundary_modal.html" %}
+{% endblock %}
 
+{% block extra_js %}
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-  const smokeSelect = document.getElementById("q2Smoke");
-  const freqContainer = document.getElementById("smokingFrequencyContainer");
-  const freqInput = document.getElementById("q2Cigarettes");
+  const form = document.getElementById("step2Form");
+  if (!form) return;
 
-  function toggleSmokingFreq() {
-    if (smokeSelect && smokeSelect.value === "Current") {
-      freqContainer.style.display = "block";
-      if (freqInput) freqInput.setAttribute("required", "required");
-    } else {
-      freqContainer.style.display = "none";
-      if (freqInput) {
-        freqInput.removeAttribute("required");
-        freqInput.classList.remove("is-invalid");
+  const requiredInputs = [
+    form.querySelector("[name='diet_type']"),
+    form.querySelector("[name='meals_per_day']"),
+    form.querySelector("[name='water_intake_L']"),
+    form.querySelector("[name='fast_food_per_week']"),
+    form.querySelector("[name='sugar_intake']"),
+    form.querySelector("[name='fruit_veg_servings']"),
+    form.querySelector("[name='exercise_frequency']"),
+    form.querySelector("[name='sleep_hours']")
+  ].filter(Boolean);
+
+  const submitBtn = document.getElementById("q2Submit");
+  const lockedNotice = document.getElementById("stepLockedNotice");
+  const filledCountEl = document.getElementById("filledCount");
+
+  function checkFormCompletion() {
+    let filled = 0;
+    requiredInputs.forEach(input => {
+      const val = input.value ? input.value.trim() : "";
+      if (val !== "") {
+        filled++;
       }
+    });
+
+    if (filledCountEl) filledCountEl.textContent = filled;
+
+    if (filled >= requiredInputs.length) {
+      if (lockedNotice) lockedNotice.style.display = "none";
+      if (submitBtn) {
+        submitBtn.style.display = "inline-flex";
+        submitBtn.classList.add("shadow-lg");
+      }
+    } else {
+      if (lockedNotice) lockedNotice.style.display = "flex";
+      if (submitBtn) submitBtn.style.display = "none";
     }
   }
 
-  if (smokeSelect) {
-    smokeSelect.addEventListener("change", toggleSmokingFreq);
-    toggleSmokingFreq();
-  }
+  requiredInputs.forEach(input => {
+    input.addEventListener("input", checkFormCompletion);
+    input.addEventListener("change", checkFormCompletion);
+  });
+
+  // Run on initial load
+  checkFormCompletion();
 });
 </script>
 {% endblock %}
-

@@ -1,21 +1,21 @@
 {% extends "base.html" %}
-{% block title %}Step 1 – Personal Info{% endblock %}
+{% block title %}Step 1 – Personal Profile & Vitals{% endblock %}
 {% block content %}
-<div class="container-xl py-5" style="max-width:740px;">
+<div class="container-xl py-5" style="max-width:760px;">
 
   <!-- Step progress header -->
   <div class="mb-4">
     <div class="d-flex justify-content-between align-items-center mb-1">
-      <span class="small text-muted font-monospace">Step 1 of 7 · Personal &amp; Occupation</span>
-      <span class="small fw-600 text-success">14% Complete</span>
+      <span class="small text-muted font-monospace">Step 1 of 4 · Personal Profile &amp; Vitals</span>
+      <span class="small fw-600 text-success">25% Complete</span>
     </div>
     <div class="progress mb-4" style="height:6px;background:var(--surface-overlay);border-radius:50px;">
-      <div class="progress-bar" role="progressbar" style="width: 14%; background:var(--grad-primary); border-radius:50px;" aria-valuenow="1" aria-valuemin="1" aria-valuemax="7"></div>
+      <div class="progress-bar" role="progressbar" style="width: 25%; background:var(--grad-primary); border-radius:50px;" aria-valuenow="1" aria-valuemin="1" aria-valuemax="4"></div>
     </div>
 
     <!-- Step wizard pills -->
     <div class="step-wizard">
-      {% for i, label in [(1,'Personal'),(2,'Lifestyle'),(3,'Food'),(4,'Medical'),(5,'Family'),(6,'Exercise'),(7,'Mental')] %}
+      {% for i, label in [(1,'Profile & Vitals'),(2,'Lifestyle & Diet'),(3,'Medical & Family'),(4,'Mind & Wellness')] %}
       <div class="step-item {{ 'active' if step == i else ('done' if step > i else 'inactive') }}">
         <div class="step-circle">{% if step > i %}<i class="bi bi-check2"></i>{% else %}{{ i }}{% endif %}</div>
         <div class="step-label">{{ label }}</div>
@@ -25,8 +25,8 @@
   </div>
 
   <div class="glass-card p-4 p-md-5">
-    <h2 class="fs-4 fw-700 mb-1">Personal &amp; Occupation Information</h2>
-    <p class="text-muted small mb-4">Provide your baseline demographics so our ML models can calibrate risk calculations.</p>
+    <h2 class="fs-4 fw-700 mb-1">Personal Profile &amp; Physical Vitals</h2>
+    <p class="text-muted small mb-4">Provide your demographics and baseline vitals so our ML models can calibrate risk calculations.</p>
 
     <!-- Medical Notice -->
     <div class="alert alert-warning bg-warning bg-opacity-10 border-warning border-opacity-25 py-2 px-3 small mb-4 d-flex align-items-center gap-2">
@@ -36,6 +36,11 @@
 
     <form method="POST" novalidate id="step1Form">
       {{ form.hidden_tag() }}
+
+      <!-- Section: Demographics -->
+      <h5 class="fs-6 fw-700 text-uppercase tracking-wider text-primary mb-3 d-flex align-items-center gap-2">
+        <i class="bi bi-person-bounding-box"></i> Demographics &amp; Occupation
+      </h5>
 
       <div class="row g-3 mb-3">
         <div class="col-6">
@@ -58,39 +63,110 @@
       <div class="row g-3 mb-3">
         <div class="col-6">
           <label class="form-label fw-500" for="q1Height">
-            {{ form.height_cm.label.text }} <span class="badge bg-secondary-subtle text-muted ms-1 small">50–250 cm</span>
+            {{ form.height_cm.label.text }} <span class="text-danger">*</span>
+            <span class="badge bg-secondary-subtle text-muted ms-1 small">50–250 cm</span>
           </label>
           {{ form.height_cm(class="form-control" + (" is-invalid" if form.height_cm.errors else ""), placeholder="e.g. 170", id="q1Height", min="50", max="250", data_min="50", data_max="250", data_label="Height", data_unit="cm") }}
           {% for e in form.height_cm.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
         </div>
         <div class="col-6">
           <label class="form-label fw-500" for="q1Weight">
-            {{ form.weight_kg.label.text }} <span class="badge bg-secondary-subtle text-muted ms-1 small">10–120 kg</span>
+            {{ form.weight_kg.label.text }} <span class="text-danger">*</span>
+            <span class="badge bg-secondary-subtle text-muted ms-1 small">10–120 kg</span>
           </label>
           {{ form.weight_kg(class="form-control" + (" is-invalid" if form.weight_kg.errors else ""), placeholder="e.g. 70", id="q1Weight", min="10", max="120", data_min="10", data_max="120", data_label="Weight", data_unit="kg") }}
           {% for e in form.weight_kg.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
         </div>
       </div>
 
-      <div class="mb-3">
-        <label class="form-label fw-500" for="q1Occupation">{{ form.occupation.label.text }}</label>
-        {{ form.occupation(class="form-control" + (" is-invalid" if form.occupation.errors else ""), placeholder="e.g. Software Engineer, Student, Accountant", id="q1Occupation") }}
-        {% for e in form.occupation.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+      <div class="row g-3 mb-4">
+        <div class="col-md-7">
+          <label class="form-label fw-500" for="q1Occupation">
+            {{ form.occupation.label.text }} <span class="text-danger">*</span>
+          </label>
+          {{ form.occupation(class="form-control" + (" is-invalid" if form.occupation.errors else ""), placeholder="e.g. Software Engineer, Student", id="q1Occupation") }}
+          {% for e in form.occupation.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-md-5">
+          <label class="form-label fw-500" for="q1WorkHours">
+            {{ form.working_hours_per_day.label.text }} <span class="text-danger">*</span>
+            <span class="badge bg-secondary-subtle text-muted ms-1 small">0–24 hrs</span>
+          </label>
+          {{ form.working_hours_per_day(class="form-control" + (" is-invalid" if form.working_hours_per_day.errors else ""), placeholder="e.g. 8", id="q1WorkHours", min="0", max="24") }}
+          {% for e in form.working_hours_per_day.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
       </div>
 
-      <div class="mb-4">
-        <label class="form-label fw-500" for="q1WorkHours">
-          {{ form.working_hours_per_day.label.text }} <span class="badge bg-secondary-subtle text-muted ms-1 small">0–24 hrs</span>
-        </label>
-        {{ form.working_hours_per_day(class="form-control" + (" is-invalid" if form.working_hours_per_day.errors else ""), placeholder="e.g. 8", id="q1WorkHours", min="0", max="24") }}
-        {% for e in form.working_hours_per_day.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+      <hr class="my-4 border-secondary opacity-25">
+
+      <!-- Section: Baseline Physical Vitals -->
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="fs-6 fw-700 text-uppercase tracking-wider text-info mb-0 d-flex align-items-center gap-2">
+          <i class="bi bi-heart-pulse"></i> Baseline Physical Vitals
+        </h5>
+        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 small fw-600">
+          <i class="bi bi-asterisk me-1"></i>Mandatory
+        </span>
+      </div>
+      <p class="text-muted small mb-3">All vital parameters are mandatory for accurate calibration of cardiovascular and metabolic risk scores.</p>
+
+      <div class="row g-3 mb-3">
+        <div class="col-6">
+          <label class="form-label fw-500" for="q1BpSys">
+            {{ form.blood_pressure_systolic.label.text }} <span class="text-danger">*</span>
+          </label>
+          {{ form.blood_pressure_systolic(class="form-control" + (" is-invalid" if form.blood_pressure_systolic.errors else ""), placeholder="e.g. 120", id="q1BpSys") }}
+          {% for e in form.blood_pressure_systolic.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-6">
+          <label class="form-label fw-500" for="q1BpDia">
+            {{ form.blood_pressure_diastolic.label.text }} <span class="text-danger">*</span>
+          </label>
+          {{ form.blood_pressure_diastolic(class="form-control" + (" is-invalid" if form.blood_pressure_diastolic.errors else ""), placeholder="e.g. 80", id="q1BpDia") }}
+          {% for e in form.blood_pressure_diastolic.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
       </div>
 
-      <div class="d-flex justify-content-between align-items-center pt-2">
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <label class="form-label fw-500" for="q1Sugar">
+            {{ form.blood_sugar_fasting.label.text }} <span class="text-danger">*</span>
+          </label>
+          {{ form.blood_sugar_fasting(class="form-control" + (" is-invalid" if form.blood_sugar_fasting.errors else ""), placeholder="e.g. 95", id="q1Sugar", step="0.1") }}
+          {% for e in form.blood_sugar_fasting.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-500" for="q1Chol">
+            {{ form.cholesterol_level.label.text }} <span class="text-danger">*</span>
+          </label>
+          {{ form.cholesterol_level(class="form-control" + (" is-invalid" if form.cholesterol_level.errors else ""), placeholder="e.g. 190", id="q1Chol", step="0.1") }}
+          {% for e in form.cholesterol_level.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-500" for="q1Hr">
+            {{ form.heart_rate_resting.label.text }} <span class="text-danger">*</span>
+          </label>
+          {{ form.heart_rate_resting(class="form-control" + (" is-invalid" if form.heart_rate_resting.errors else ""), placeholder="e.g. 72", id="q1Hr") }}
+          {% for e in form.heart_rate_resting.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
+      </div>
+
+      <!-- Action buttons & Dynamic Step Unlock -->
+      <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center pt-3 border-top border-secondary border-opacity-25 gap-3">
         <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary rounded-pill px-4">Cancel</a>
-        <button type="submit" class="btn btn-gradient rounded-pill px-4 py-2" id="q1Submit">
-          Next Step <i class="bi bi-arrow-right ms-1"></i>
-        </button>
+
+        <div class="d-flex align-items-center gap-3">
+          <!-- Notice shown when current step is incomplete -->
+          <div id="stepLockedNotice" class="d-flex align-items-center gap-2 text-warning small bg-warning bg-opacity-10 border border-warning border-opacity-25 px-3 py-2 rounded-pill">
+            <i class="bi bi-lock-fill text-warning"></i>
+            <span>Fill all mandatory fields above to unlock Step 2 (<span id="filledCount">0</span>/11)</span>
+          </div>
+
+          <!-- Next button only appears when current step is completely filled -->
+          <button type="submit" class="btn btn-gradient rounded-pill px-4 py-2" id="q1Submit" style="display: none;">
+            Next: Lifestyle &amp; Diet <i class="bi bi-arrow-right ms-1"></i>
+          </button>
+        </div>
       </div>
     </form>
   </div>
@@ -99,3 +175,60 @@
 {% include "predict/_boundary_modal.html" %}
 {% endblock %}
 
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const form = document.getElementById("step1Form");
+  if (!form) return;
+
+  const requiredInputs = [
+    form.querySelector("[name='age']"),
+    form.querySelector("[name='gender']"),
+    form.querySelector("[name='height_cm']"),
+    form.querySelector("[name='weight_kg']"),
+    form.querySelector("[name='occupation']"),
+    form.querySelector("[name='working_hours_per_day']"),
+    form.querySelector("[name='blood_pressure_systolic']"),
+    form.querySelector("[name='blood_pressure_diastolic']"),
+    form.querySelector("[name='blood_sugar_fasting']"),
+    form.querySelector("[name='cholesterol_level']"),
+    form.querySelector("[name='heart_rate_resting']")
+  ].filter(Boolean);
+
+  const submitBtn = document.getElementById("q1Submit");
+  const lockedNotice = document.getElementById("stepLockedNotice");
+  const filledCountEl = document.getElementById("filledCount");
+
+  function checkFormCompletion() {
+    let filled = 0;
+    requiredInputs.forEach(input => {
+      const val = input.value ? input.value.trim() : "";
+      if (val !== "") {
+        filled++;
+      }
+    });
+
+    if (filledCountEl) filledCountEl.textContent = filled;
+
+    if (filled >= requiredInputs.length) {
+      if (lockedNotice) lockedNotice.style.display = "none";
+      if (submitBtn) {
+        submitBtn.style.display = "inline-flex";
+        submitBtn.classList.add("shadow-lg");
+      }
+    } else {
+      if (lockedNotice) lockedNotice.style.display = "flex";
+      if (submitBtn) submitBtn.style.display = "none";
+    }
+  }
+
+  requiredInputs.forEach(input => {
+    input.addEventListener("input", checkFormCompletion);
+    input.addEventListener("change", checkFormCompletion);
+  });
+
+  // Run on initial load (e.g. if profile values were pre-populated)
+  checkFormCompletion();
+});
+</script>
+{% endblock %}
