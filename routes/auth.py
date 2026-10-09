@@ -55,23 +55,36 @@ def register():
     if form.validate_on_submit():
         email = form.email.data.lower().strip()
 
-        # Check for duplicate email
-        if User.query.filter_by(email=email).first():
-            flash("An account with this email address already exists.", "danger")
-            return render_template("auth/register.html", form=form)
+        try:
+            # Check for duplicate email
+            if User.query.filter_by(email=email).first():
+                flash("An account with this email address already exists.", "danger")
+                return render_template("auth/register.html", form=form)
 
-        # Create user (password is auto-hashed by the model setter)
-        user = User(
-            full_name = form.full_name.data.strip(),
-            age       = form.age.data,
-            gender    = form.gender.data,
-            height_cm = form.height_cm.data,
-            weight_kg = form.weight_kg.data,
-            email     = email,
-        )
-        user.password = form.password.data   # triggers bcrypt hash
-        db.session.add(user)
-        db.session.commit()
+            # Create user (password is auto-hashed by the model setter)
+            user = User(
+                full_name = form.full_name.data.strip(),
+                age       = form.age.data,
+                gender    = form.gender.data,
+                height_cm = form.height_cm.data,
+                weight_kg = form.weight_kg.data,
+                email     = email,
+            )
+            user.password = form.password.data   # triggers bcrypt hash
+            db.session.add(user)
+            db.session.commit()
+
+        except Exception:
+            db.session.rollback()
+            current_app.logger.exception(
+                "Registration DB error for email=%s", email
+            )
+            flash(
+                "Registration could not be completed due to a server error. "
+                "Please try again in a moment.",
+                "danger",
+            )
+            return render_template("auth/register.html", form=form)
 
         # In development, auto-verify so users can log in without SMTP setup
         if os.environ.get('FLASK_ENV', 'development') == 'development':
@@ -91,6 +104,7 @@ def register():
         return redirect(url_for("auth.login"))
 
     return render_template("auth/register.html", form=form)
+
 
 
 # ── Email verification ─────────────────────────────────────────────────────
