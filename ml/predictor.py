@@ -7,7 +7,7 @@ values, and generates LIME explanations.
 """
 
 import os
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, Optional
 import numpy as np
 import pandas as pd
 
