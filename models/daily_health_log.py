@@ -11,6 +11,7 @@ Relationships:
 
 from datetime import datetime, date
 from extensions import db
+from sqlalchemy.dialects.mysql import INTEGER as MYSQL_INTEGER
 
 
 class DailyHealthLog(db.Model):
@@ -32,7 +33,7 @@ class DailyHealthLog(db.Model):
     # ── Primary key ────────────────────────────────────────────────────────
     log_id  = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(
-        db.Integer,
+        MYSQL_INTEGER(unsigned=True),
         db.ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True,

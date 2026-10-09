@@ -7,6 +7,7 @@ Used by administrators to monitor system activity and user actions.
 
 from datetime import datetime
 from extensions import db
+from sqlalchemy.dialects.mysql import INTEGER as MYSQL_INTEGER
 
 
 class UserActivityLog(db.Model):
@@ -17,7 +18,7 @@ class UserActivityLog(db.Model):
     __tablename__ = "user_activity_logs"
 
     id         = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    user_id    = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
+    user_id    = db.Column(MYSQL_INTEGER(unsigned=True), db.ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
     action     = db.Column(db.String(120), nullable=False, index=True)
     details    = db.Column(db.Text, nullable=True)
     ip_address = db.Column(db.String(100), nullable=True)

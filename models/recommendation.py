@@ -6,6 +6,7 @@ Stores AI-generated recommendations linked to a specific Prediction.
 
 from datetime import datetime
 from extensions import db
+from sqlalchemy.dialects.mysql import INTEGER as MYSQL_INTEGER
 
 
 # ── Category constants ─────────────────────────────────────────────────────
@@ -31,10 +32,10 @@ class Recommendation(db.Model):
 
     # ── Primary key ────────────────────────────────────────────────────────
     id            = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    prediction_id = db.Column(db.Integer,
+    prediction_id = db.Column(MYSQL_INTEGER(unsigned=True),
                                db.ForeignKey("predictions.id", ondelete="CASCADE"),
                                nullable=False, index=True)
-    user_id       = db.Column(db.Integer,
+    user_id       = db.Column(MYSQL_INTEGER(unsigned=True),
                                db.ForeignKey("users.id", ondelete="CASCADE"),
                                nullable=False, index=True)
 

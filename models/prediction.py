@@ -8,6 +8,7 @@ Includes risk probabilities, risk levels, health scores, and XAI explanation pat
 import json
 from datetime import datetime
 from extensions import db
+from sqlalchemy.dialects.mysql import INTEGER as MYSQL_INTEGER
 
 
 # ── Risk-level thresholds ──────────────────────────────────────────────────
@@ -45,10 +46,10 @@ class Prediction(db.Model):
 
     # ── Primary key ────────────────────────────────────────────────────────
     id               = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    user_id          = db.Column(db.Integer,
+    user_id          = db.Column(MYSQL_INTEGER(unsigned=True),
                                   db.ForeignKey("users.id", ondelete="CASCADE"),
                                   nullable=False, index=True)
-    questionnaire_id = db.Column(db.Integer,
+    questionnaire_id = db.Column(MYSQL_INTEGER(unsigned=True),
                                   db.ForeignKey("questionnaires.id", ondelete="CASCADE"),
                                   nullable=False, index=True)
 

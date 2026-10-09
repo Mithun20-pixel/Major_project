@@ -6,6 +6,7 @@ Tracks generated PDF health reports linked to a Prediction.
 
 from datetime import datetime
 from extensions import db
+from sqlalchemy.dialects.mysql import INTEGER as MYSQL_INTEGER
 
 
 class Report(db.Model):
@@ -18,10 +19,10 @@ class Report(db.Model):
     __tablename__ = "reports"
 
     id            = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    user_id       = db.Column(db.Integer,
+    user_id       = db.Column(MYSQL_INTEGER(unsigned=True),
                                db.ForeignKey("users.id",       ondelete="CASCADE"),
                                nullable=False, index=True)
-    prediction_id = db.Column(db.Integer,
+    prediction_id = db.Column(MYSQL_INTEGER(unsigned=True),
                                db.ForeignKey("predictions.id", ondelete="CASCADE"),
                                nullable=False, index=True)
 
