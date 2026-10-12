@@ -21,7 +21,11 @@ from forms.auth import (
     RegistrationForm, LoginForm, ForgotPasswordForm,
     ResetPasswordForm, ResendVerificationForm
 )
-from utils.email_utils import send_verification_email, send_password_reset_email
+from utils.email_utils import (
+    send_verification_email,
+    send_password_reset_email,
+    EmailDeliveryError,
+)
 from utils.rate_limiter import rate_limit
 
 auth_bp = Blueprint("auth", __name__, template_folder="../templates/auth")
@@ -86,7 +90,9 @@ def register():
             )
             return render_template("auth/register.html", form=form)
 
-        # In development, auto-verify so users can log in without SMTP setup
+        # In development, auto-verify so users can log in without SMTP setup.
+        # In production, the account stays unverified until the user clicks the
+        # link — a failed email send NEVER grants automatic verification.
         if os.environ.get('FLASK_ENV', 'development') == 'development':
             user.is_email_verified = True
             db.session.commit()
@@ -94,17 +100,27 @@ def register():
         else:
             try:
                 send_verification_email(user)
-                flash("Registration successful! Please check your email to verify your account.", "success")
-            except Exception as exc:
-                current_app.logger.error(f"Failed to send email verification: {exc}")
-                user.is_email_verified = True
-                db.session.commit()
-                flash("Account created! Email delivery failed — logged in directly for demo.", "warning")
+                flash(
+                    "Registration successful! Please check your email to verify your account.",
+                    "success",
+                )
+            except EmailDeliveryError:
+                # Log already written by email_utils — never expose SMTP details here.
+                # The account stays unverified; instruct the user to try again later.
+                current_app.logger.warning(
+                    "Verification email could not be sent for new user %s; "
+                    "account left unverified.",
+                    user.email,
+                )
+                flash(
+                    "Your account was created, but we could not send a verification email right now. "
+                    "Please use the \"Resend verification\" link on the login page to try again.",
+                    "warning",
+                )
 
         return redirect(url_for("auth.login"))
 
     return render_template("auth/register.html", form=form)
-
 
 
 # ── Email verification ─────────────────────────────────────────────────────
@@ -150,9 +166,17 @@ def resend_verification():
         if user and not user.is_email_verified:
             try:
                 send_verification_email(user)
-            except Exception as exc:
-                current_app.logger.error(f"Error resending verification: {exc}")
-        flash("If an unverified account exists with that email, a new verification link has been sent.", "info")
+            except EmailDeliveryError:
+                # Log already written by email_utils; swallow here so the
+                # generic user-facing message is always shown (prevents enumeration).
+                current_app.logger.warning(
+                    "Resend verification email failed for %s; user account unchanged.",
+                    user.email,
+                )
+        flash(
+            "If an unverified account exists with that email, a new verification link has been sent.",
+            "info",
+        )
         return redirect(url_for("auth.login"))
 
     return render_template("auth/resend_verification.html", form=form)
@@ -246,8 +270,13 @@ def forgot_password():
 
             try:
                 send_password_reset_email(user, token=token)
-            except Exception as exc:
-                current_app.logger.error(f"Error sending password reset email: {exc}")
+            except EmailDeliveryError:
+                # Log already written by email_utils; ignore here so the
+                # generic user-facing message is always shown.
+                current_app.logger.warning(
+                    "Password-reset email delivery failed for %s.",
+                    user.email,
+                )
 
         flash(
             "If that email address is registered, you will receive a password reset link shortly.",

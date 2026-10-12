@@ -3,13 +3,31 @@ utils/email_utils.py - Email Sending Utilities
 ===============================================
 Handles sending verification emails and password-reset emails
 using Flask-Mail with itsdangerous signed tokens.
+
+Security notes
+--------------
+* SMTP exceptions are logged with diagnostic info (exception type + sanitised
+  message) and then **re-raised** so callers can decide how to respond.
+* SMTP passwords, app-passwords, and other secrets are NEVER written to logs.
 """
+
+import smtplib
+import socket
 
 from flask import current_app, url_for
 from flask_mail import Message
 from itsdangerous import URLSafeTimedSerializer
 
 from extensions import mail
+
+
+class EmailDeliveryError(RuntimeError):
+    """Raised when an outbound email cannot be delivered.
+
+    Wraps the underlying transport exception so callers get a single,
+    predictable error type without needing to know the SMTP internals.
+    The original cause is available via ``__cause__``.
+    """
 
 
 def _generate_token(email: str, salt: str) -> str:
@@ -33,6 +51,11 @@ def send_verification_email(user) -> None:
 
     Args:
         user: User ORM instance with .email and .full_name attributes.
+
+    Raises:
+        EmailDeliveryError: If the message cannot be sent (SMTP error,
+            connection failure, etc.).  Credentials are never included in
+            the exception message or the log line.
     """
     token = _generate_token(user.email, salt="email-verify")
     verify_url = url_for("auth.verify_email", token=token, _external=True)
@@ -43,12 +66,7 @@ def send_verification_email(user) -> None:
         recipients=[user.email],
         html=_render_verification_email(user.full_name, verify_url),
     )
-    try:
-        mail.send(msg)
-    except Exception as exc:
-        current_app.logger.error(
-            f"Failed to send verification email to {user.email}: {exc}"
-        )
+    _send_message(msg, context=f"verification email to {user.email}")
 
 
 def send_password_reset_email(user, token: str = None) -> None:
@@ -58,6 +76,9 @@ def send_password_reset_email(user, token: str = None) -> None:
     Args:
         user: User ORM instance with .email and .full_name attributes.
         token: Optional existing token string. Generated if not supplied.
+
+    Raises:
+        EmailDeliveryError: If the message cannot be sent.
     """
     if not token:
         token = _generate_token(user.email, salt="password-reset")
@@ -69,13 +90,76 @@ def send_password_reset_email(user, token: str = None) -> None:
         recipients=[user.email],
         html=_render_reset_email(user.full_name, reset_url),
     )
+    _send_message(msg, context=f"password-reset email to {user.email}")
+
+
+# ── Internal helpers ────────────────────────────────────────────────────────
+
+def _send_message(msg: Message, *, context: str) -> None:
+    """
+    Attempt to send *msg* via Flask-Mail.
+
+    Catches SMTP / socket / generic transport errors, logs a diagnostic
+    line that contains ONLY the exception type and a sanitised description
+    (never SMTP credentials or stack traces), then re-raises as
+    :class:`EmailDeliveryError`.
+
+    Args:
+        msg:     The Flask-Mail ``Message`` to send.
+        context: A human-readable description used in the log line
+                 (e.g. "verification email to user@example.com").
+
+    Raises:
+        EmailDeliveryError: Always raised when sending fails.
+    """
     try:
         mail.send(msg)
-    except Exception as exc:
+    except smtplib.SMTPAuthenticationError as exc:
+        # Authentication failure — log type only; never log credentials.
         current_app.logger.error(
-            f"Failed to send reset email to {user.email}: {exc}"
+            "Email delivery failed (%s) — SMTP authentication error while sending %s. "
+            "Check MAIL_USERNAME / MAIL_PASSWORD configuration.",
+            type(exc).__name__,
+            context,
         )
-
+        raise EmailDeliveryError(
+            "SMTP authentication failed. Contact the site administrator."
+        ) from exc
+    except smtplib.SMTPException as exc:
+        # Other SMTP-layer errors (bad recipients, relay denied, etc.)
+        # smtp_code / smtp_error are safe to log; they contain no secrets.
+        current_app.logger.error(
+            "Email delivery failed (%s) while sending %s. "
+            "SMTP code: %s — reason: %s",
+            type(exc).__name__,
+            context,
+            getattr(exc, "smtp_code", "N/A"),
+            getattr(exc, "smtp_error", str(exc)),
+        )
+        raise EmailDeliveryError(
+            "SMTP error occurred during email delivery."
+        ) from exc
+    except (socket.gaierror, socket.timeout, ConnectionError, OSError) as exc:
+        # Network-level problems (DNS failure, timeout, refused connection)
+        current_app.logger.error(
+            "Email delivery failed (%s) — network/connection error while sending %s.",
+            type(exc).__name__,
+            context,
+        )
+        raise EmailDeliveryError(
+            "Network error prevented email delivery."
+        ) from exc
+    except Exception as exc:  # noqa: BLE001
+        # Catch-all for unexpected failures; log type only to avoid
+        # accidentally surfacing sensitive config values from repr().
+        current_app.logger.error(
+            "Email delivery failed unexpectedly (%s) while sending %s.",
+            type(exc).__name__,
+            context,
+        )
+        raise EmailDeliveryError(
+            "Unexpected error during email delivery."
+        ) from exc
 
 
 # ── Email HTML templates ────────────────────────────────────────────────────
